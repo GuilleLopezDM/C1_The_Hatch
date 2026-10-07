@@ -1,0 +1,10 @@
+# La entrega pública contiene solo los dos notebooks.
+/*
+!/.gitignore
+!/.gitattributes
+!/notebooks/
+/notebooks/*
+!/notebooks/*.ipynb
+
+__pycache__/
+.ipynb_checkpoints/
