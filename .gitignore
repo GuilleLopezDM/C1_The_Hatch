@@ -1,7 +1,10 @@
-# La entrega pública contiene solo los dos notebooks.
+# El repositorio incluye notebooks, dependencias y guías HTML.
 /*
 !/.gitignore
 !/.gitattributes
+!/requirements.txt
+!/README.md
+!/*.html
 !/notebooks/
 /notebooks/*
 !/notebooks/*.ipynb

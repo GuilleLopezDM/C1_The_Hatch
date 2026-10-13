@@ -1,0 +1,3395 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explicación detallada de 01_viviendas.ipynb</title>
+<style>
+:root {
+  --bg:#fff; --fg:#1f2937; --line:#e5e7eb; --code:#f6f8fa; --accent:#2563eb;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.65;
+}
+main { width:min(980px,calc(100% - 32px)); margin:48px auto 80px; }
+h1,h2,h3 { color:#111827; line-height:1.25; margin-top:2em; margin-bottom:.65em; }
+h1 { font-size:2rem; border-bottom:1px solid var(--line); padding-bottom:.35rem; }
+h2 { font-size:1.45rem; }
+h3 { font-size:1.15rem; }
+p { margin:.65rem 0; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+code {
+  font-family:Consolas,"Liberation Mono",Menlo,monospace;
+  background:var(--code); padding:.12em .35em; border-radius:5px; font-size:.92em;
+}
+pre {
+  background:#0d1117; color:#e6edf3; padding:16px 18px; border-radius:10px;
+  overflow:auto; line-height:1.5; border:1px solid #30363d;
+}
+pre code { background:transparent; padding:0; color:inherit; }
+blockquote {
+  margin:1rem 0; padding:.75rem 1rem; border-left:4px solid var(--accent); background:#f8fafc;
+}
+table { width:100%; border-collapse:collapse; margin:1rem 0 1.5rem; }
+th,td { border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top; }
+th { background:#f8fafc; }
+.formula pre { background:#f8fafc; color:#111827; border-color:var(--line); text-align:center; white-space:pre-wrap; }
+@media print {
+  main { width:auto; margin:20px; }
+  pre { white-space:pre-wrap; word-break:break-word; }
+}
+</style>
+</head>
+<body>
+<main>
+<p>Sí. Te lo explico siguiendo exactamente el orden del notebook, incluyendo qué hace cada instrucción, qué significan los métodos, sus parámetros y cómo interpretar los resultados.</p>
+
+<h1>0. ¿Qué hace <code>01_viviendas.ipynb</code> en general?</h1>
+
+<p>El notebook realiza un <strong>EDA — Exploratory Data Analysis / Análisis Exploratorio de Datos</strong> sobre el dataset <strong>California Housing Prices</strong>.</p>
+
+<p>La pregunta principal es:</p>
+
+<blockquote>¿Qué características están asociadas con el valor de las viviendas de California?</blockquote>
+
+<p>No intenta predecir el precio con machine learning. Intenta <strong>entender los datos y encontrar asociaciones</strong>.</p>
+
+<p>El flujo completo es:</p>
+
+<pre><code class="language-text">DATOS DE KAGGLE
+      ↓
+DESCARGA
+      ↓
+EXPLORACIÓN
+      ↓
+LIMPIEZA
+      ↓
+CREACIÓN DE NUEVAS VARIABLES
+      ↓
+ANÁLISIS DE DISTRIBUCIONES
+      ↓
+COSTA VS PRECIO
+      ↓
+CORRELACIONES
+      ↓
+PAIRPLOTS
+      ↓
+ANÁLISIS GEOGRÁFICO
+      ↓
+INGRESO + COSTA
+      ↓
+ANÁLISIS DE SENSIBILIDAD
+      ↓
+CONCLUSIONES</code></pre>
+
+<p>La unidad de análisis tampoco es una vivienda individual.</p>
+
+<p>Cada fila representa una <strong>zona censal de California</strong>.</p>
+
+<p>Por eso:</p>
+
+<pre><code class="language-python">median_house_value</code></pre>
+
+<p>no significa «precio de esta casa», sino:</p>
+
+<blockquote>valor mediano de las viviendas de esa zona censal.</blockquote>
+
+<p>Y los datos corresponden al censo de <strong>1990</strong>.</p>
+
+<hr>
+
+<h1>CELDA 0 — Título y planteamiento</h1>
+
+<p>Esta es una celda Markdown, no Python.</p>
+
+<pre><code class="language-markdown"># 01 · ¿Qué se asocia con el valor de las viviendas de California?</code></pre>
+
+<p><code>#</code> en Markdown crea un título de nivel 1.</p>
+
+<p>La pregunta es intencionalmente «qué se asocia» y no «qué causa», porque el análisis encuentra <strong>asociaciones estadísticas</strong>, no causalidad.</p>
+
+<p>Por ejemplo, si encontramos:</p>
+
+<pre><code class="language-text">mayor ingreso → mayor precio</code></pre>
+
+<p>no podemos afirmar solamente con este notebook:</p>
+
+<pre><code class="language-text">mayor ingreso CAUSA mayor precio</code></pre>
+
+<p>Puede haber muchísimas variables adicionales.</p>
+
+<hr>
+
+<p>Se indica:</p>
+
+<pre><code class="language-text">Datos del censo de 1990</code></pre>
+
+<p>Esto es importante porque todos los valores económicos deben interpretarse históricamente.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">USD 200.000</code></pre>
+
+<p>significa <strong>200.000 dólares de 1990</strong>, no 200.000 dólares actuales.</p>
+
+<hr>
+
+<p>También aparece:</p>
+
+<pre><code class="language-text">median_income es un índice de ingreso escalado</code></pre>
+
+<p>Este punto es muy importante.</p>
+
+<p>Cuando después aparezca:</p>
+
+<pre><code class="language-python">median_income = 3.5</code></pre>
+
+<p>NO significa:</p>
+
+<pre><code class="language-text">USD 3,50</code></pre>
+
+<p>ni necesariamente:</p>
+
+<pre><code class="language-text">USD 3.500</code></pre>
+
+<p>Es una variable que fue <strong>escalada en el dataset</strong>.</p>
+
+<p>Por eso el notebook correctamente la denomina:</p>
+
+<blockquote>ingreso mediano escalado.</blockquote>
+
+<hr>
+
+<h1>CELDA 1 — Cómo ejecutar el notebook</h1>
+
+<p>También es Markdown.</p>
+
+<p>Explica las dependencias:</p>
+
+<pre><code class="language-text">Python
+Pandas
+NumPy
+Matplotlib
+Seaborn</code></pre>
+
+<p>y cómo instalarlas:</p>
+
+<pre><code class="language-bash">python -m pip install -r requirements.txt</code></pre>
+
+<h3>¿Qué significa?</h3>
+
+<p><code>python</code></p>
+
+<p>Ejecuta Python.</p>
+
+<p><code>-m</code></p>
+
+<p>Le dice a Python:</p>
+
+<blockquote>ejecutá un módulo como programa.</blockquote>
+
+<p><code>pip</code></p>
+
+<p>Es el gestor de paquetes de Python.</p>
+
+<p><code>install</code></p>
+
+<p>Orden para instalar paquetes.</p>
+
+<p><code>-r requirements.txt</code></p>
+
+<p>Significa:</p>
+
+<blockquote>leé la lista de dependencias desde el archivo <code>requirements.txt</code>.</blockquote>
+
+<p>Por ejemplo, ese archivo podría contener:</p>
+
+<pre><code class="language-text">pandas==2.2.3
+numpy==2.1.3
+matplotlib==3.9.4
+seaborn==0.13.2</code></pre>
+
+<hr>
+
+<h1>CELDA 2 — Librerías, descarga de datos y configuración</h1>
+
+<p>Esta es una de las celdas más importantes.</p>
+
+<h2>Línea 1</h2>
+
+<pre><code class="language-python">from io import BytesIO</code></pre>
+
+<p>Se importa <code>BytesIO</code> desde la librería estándar <code>io</code>.</p>
+
+<h3>¿Para qué sirve?</h3>
+
+<p>Permite tratar datos binarios que están en memoria como si fueran un archivo.</p>
+
+<p>Normalmente haríamos algo como:</p>
+
+<pre><code class="language-python">pd.read_csv(&quot;housing.csv&quot;)</code></pre>
+
+<p>porque tenemos un archivo físicamente guardado.</p>
+
+<p>Pero este notebook descarga los datos directamente desde Internet.</p>
+
+<p>Entonces recibe algo parecido a:</p>
+
+<pre><code class="language-text">010101010001...</code></pre>
+
+<p>en memoria.</p>
+
+<p><code>BytesIO</code> permite decir:</p>
+
+<blockquote>tratá estos bytes como si fueran un archivo.</blockquote>
+
+<p>Por eso después veremos:</p>
+
+<pre><code class="language-python">BytesIO(comprimido)</code></pre>
+
+<p>y:</p>
+
+<pre><code class="language-python">BytesIO(contenido)</code></pre>
+
+<hr>
+
+<h1>Línea 2</h1>
+
+<pre><code class="language-python">from urllib.request import urlopen</code></pre>
+
+<p><code>urllib</code> pertenece a la biblioteca estándar de Python.</p>
+
+<p><code>urlopen()</code> permite abrir una URL.</p>
+
+<p>Más adelante:</p>
+
+<pre><code class="language-python">urlopen(URL, timeout=90)</code></pre>
+
+<p>hace una solicitud HTTP a Kaggle.</p>
+
+<hr>
+
+<h1>Línea 3</h1>
+
+<pre><code class="language-python">from zipfile import ZipFile</code></pre>
+
+<p>Permite trabajar con archivos ZIP.</p>
+
+<p>El dataset descargado desde Kaggle viene comprimido.</p>
+
+<p>Por eso el proceso es:</p>
+
+<pre><code class="language-text">Kaggle
+ ↓
+archivo ZIP
+ ↓
+ZipFile
+ ↓
+housing.csv
+ ↓
+Pandas</code></pre>
+
+<hr>
+
+<h1>Línea 4</h1>
+
+<pre><code class="language-python">import hashlib</code></pre>
+
+<p><code>hashlib</code> permite calcular hashes criptográficos.</p>
+
+<p>Aquí se utiliza SHA-256.</p>
+
+<p>Un hash funciona como una «huella digital» del archivo.</p>
+
+<p>Dos archivos exactamente iguales generan el mismo hash.</p>
+
+<p>Después aparece:</p>
+
+<pre><code class="language-python">hashlib.sha256(contenido).hexdigest()</code></pre>
+
+<p>y el notebook produjo:</p>
+
+<pre><code class="language-text">8a3727f4cf54ac1a327f69b1d5b4db54c5834ea81c6e4efc0d163300022a685e</code></pre>
+
+<p>Esto ayuda a la <strong>reproducibilidad</strong>.</p>
+
+<p>Si posteriormente Kaggle cambia el archivo, el hash puede cambiar.</p>
+
+<hr>
+
+<h1>Línea 5</h1>
+
+<pre><code class="language-python">import numpy as np</code></pre>
+
+<p>Importa <strong>NumPy</strong>.</p>
+
+<p>Se le asigna el alias:</p>
+
+<pre><code class="language-python">np</code></pre>
+
+<p>NumPy se usa principalmente para operaciones numéricas.</p>
+
+<p>En este notebook concretamente aparece después en:</p>
+
+<pre><code class="language-python">np.isfinite(...)</code></pre>
+
+<p>para comprobar que no existen valores infinitos.</p>
+
+<hr>
+
+<h1>Línea 6</h1>
+
+<pre><code class="language-python">import pandas as pd</code></pre>
+
+<p>Importa <strong>Pandas</strong>.</p>
+
+<p>Alias:</p>
+
+<pre><code class="language-python">pd</code></pre>
+
+<p>Pandas es probablemente la librería más importante del notebook.</p>
+
+<p>Permite trabajar con tablas mediante dos estructuras fundamentales:</p>
+
+<pre><code class="language-text">DataFrame → tabla completa
+Series    → una columna o vector</code></pre>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-python">raw</code></pre>
+
+<p>es un <code>DataFrame</code>.</p>
+
+<p>Mientras que:</p>
+
+<pre><code class="language-python">df[&quot;median_income&quot;]</code></pre>
+
+<p>es una <code>Series</code>.</p>
+
+<hr>
+
+<h1>Línea 7</h1>
+
+<pre><code class="language-python">import matplotlib.pyplot as plt</code></pre>
+
+<p>Importa el módulo <code>pyplot</code> de Matplotlib.</p>
+
+<p>Alias:</p>
+
+<pre><code class="language-python">plt</code></pre>
+
+<p>Se utiliza para crear y controlar gráficos.</p>
+
+<p>Ejemplos del notebook:</p>
+
+<pre><code class="language-python">plt.subplots()
+plt.figure()
+plt.title()
+plt.xlabel()
+plt.show()</code></pre>
+
+<hr>
+
+<h1>Línea 8</h1>
+
+<pre><code class="language-python">import seaborn as sns</code></pre>
+
+<p>Importa <strong>Seaborn</strong>.</p>
+
+<p>Alias:</p>
+
+<pre><code class="language-python">sns</code></pre>
+
+<p>Seaborn trabaja encima de Matplotlib y facilita gráficos estadísticos.</p>
+
+<p>En el notebook se utilizan:</p>
+
+<pre><code class="language-python">sns.histplot()
+sns.boxplot()
+sns.heatmap()
+sns.pairplot()
+sns.scatterplot()</code></pre>
+
+<hr>
+
+<h1>Línea 9</h1>
+
+<pre><code class="language-python">from IPython.display import display, Markdown</code></pre>
+
+<p>Esto es específico del ecosistema de Jupyter/IPython.</p>
+
+<p><code>display()</code></p>
+
+<p>muestra objetos de una manera más agradable dentro del notebook.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-python">display(raw.head())</code></pre>
+
+<p>produce una tabla HTML.</p>
+
+<p>Mientras que:</p>
+
+<pre><code class="language-python">print(raw.head())</code></pre>
+
+<p>mostraría una representación textual.</p>
+
+<p><code>Markdown</code></p>
+
+<p>permite construir Markdown dinámicamente desde Python.</p>
+
+<p>Al final utilizan:</p>
+
+<pre><code class="language-python">display(Markdown(f&quot;&quot;&quot; ... &quot;&quot;&quot;))</code></pre>
+
+<p>para generar las conclusiones utilizando números calculados automáticamente.</p>
+
+<hr>
+
+<h1>Configuración visual</h1>
+
+<pre><code class="language-python">sns.set_theme(style=&quot;whitegrid&quot;, palette=&quot;colorblind&quot;)</code></pre>
+
+<p>Método:</p>
+
+<pre><code class="language-python">sns.set_theme()</code></pre>
+
+<p>configura el estilo global de Seaborn.</p>
+
+<h3>Parámetro</h3>
+
+<pre><code class="language-python">style=&quot;whitegrid&quot;</code></pre>
+
+<p>produce fondo claro con líneas de cuadrícula.</p>
+
+<h3>Parámetro</h3>
+
+<pre><code class="language-python">palette=&quot;colorblind&quot;</code></pre>
+
+<p>utiliza una paleta diseñada para que los colores sean más distinguibles para personas con diferentes tipos de visión del color.</p>
+
+<hr>
+
+<h1>Configuración de Pandas</h1>
+
+<pre><code class="language-python">pd.set_option(&quot;display.max_columns&quot;, 12)</code></pre>
+
+<p><code>pd.set_option()</code> modifica opciones globales de Pandas.</p>
+
+<p>Primer argumento:</p>
+
+<pre><code class="language-python">&quot;display.max_columns&quot;</code></pre>
+
+<p>indica qué configuración modificar.</p>
+
+<p>Segundo:</p>
+
+<pre><code class="language-python">12</code></pre>
+
+<p>indica que Pandas puede mostrar hasta 12 columnas antes de empezar a ocultarlas.</p>
+
+<p>No modifica los datos.</p>
+
+<p>Solo modifica <strong>cómo se muestran</strong>.</p>
+
+<hr>
+
+<h1>Semilla</h1>
+
+<pre><code class="language-python">SEMILLA = 42</code></pre>
+
+<p>Crea una variable constante.</p>
+
+<p>Python técnicamente no posee constantes estrictas, pero por convención se utilizan mayúsculas:</p>
+
+<pre><code class="language-python">SEMILLA
+URL</code></pre>
+
+<p>para indicar:</p>
+
+<blockquote>esta variable no debería modificarse.</blockquote>
+
+<p>La semilla se usa posteriormente para que una muestra aleatoria sea reproducible.</p>
+
+<hr>
+
+<h1>Dirección del dataset</h1>
+
+<pre><code class="language-python">URL = &quot;https://www.kaggle.com/api/v1/datasets/download/camnugent/california-housing-prices&quot;</code></pre>
+
+<p>Simplemente se guarda una cadena de texto en <code>URL</code>.</p>
+
+<p>Tipo:</p>
+
+<pre><code class="language-python">str</code></pre>
+
+<hr>
+
+<h1>Descargar el ZIP</h1>
+
+<pre><code class="language-python">with urlopen(URL, timeout=90) as respuesta:</code></pre>
+
+<p>Aquí hay varias cosas.</p>
+
+<h2><code>urlopen()</code></h2>
+
+<p>Abre la URL.</p>
+
+<h3>Primer parámetro</h3>
+
+<pre><code class="language-python">URL</code></pre>
+
+<p>dirección a consultar.</p>
+
+<h3>Parámetro</h3>
+
+<pre><code class="language-python">timeout=90</code></pre>
+
+<p>establece un máximo de aproximadamente <strong>90 segundos</strong> para esperar la respuesta.</p>
+
+<p>Si el servidor no responde dentro de ese tiempo puede producirse un error.</p>
+
+<hr>
+
+<h2>¿Qué significa <code>with</code>?</h2>
+
+<p>Es un <strong>context manager</strong>.</p>
+
+<p>En esencia:</p>
+
+<pre><code class="language-python">with recurso as variable:
+    usar recurso</code></pre>
+
+<p>Python se encarga de cerrar correctamente el recurso al terminar.</p>
+
+<p>Aquí:</p>
+
+<pre><code class="language-python">respuesta</code></pre>
+
+<p>representa la respuesta HTTP.</p>
+
+<hr>
+
+<h1>Leer la respuesta</h1>
+
+<pre><code class="language-python">    comprimido = respuesta.read()</code></pre>
+
+<p><code>read()</code> lee el contenido de la respuesta.</p>
+
+<p>El resultado son datos binarios:</p>
+
+<pre><code class="language-python">bytes</code></pre>
+
+<p>Por eso la variable se llama:</p>
+
+<pre><code class="language-python">comprimido</code></pre>
+
+<p>porque todavía representa el ZIP descargado.</p>
+
+<hr>
+
+<h1>Abrir el ZIP en memoria</h1>
+
+<pre><code class="language-python">with ZipFile(BytesIO(comprimido)) as zip_datos:</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">BytesIO(comprimido)</code></pre>
+
+<p>convierte los bytes en un objeto parecido a archivo.</p>
+
+<p>Después:</p>
+
+<pre><code class="language-python">ZipFile(...)</code></pre>
+
+<p>interpreta ese archivo como ZIP.</p>
+
+<p>Finalmente:</p>
+
+<pre><code class="language-python">as zip_datos</code></pre>
+
+<p>le pone el nombre <code>zip_datos</code>.</p>
+
+<hr>
+
+<h1>Extraer <code>housing.csv</code></h1>
+
+<pre><code class="language-python">    contenido = zip_datos.read(&quot;housing.csv&quot;)</code></pre>
+
+<p>Método:</p>
+
+<pre><code class="language-python">ZipFile.read()</code></pre>
+
+<p>Busca un archivo dentro del ZIP.</p>
+
+<p>Parámetro:</p>
+
+<pre><code class="language-python">&quot;housing.csv&quot;</code></pre>
+
+<p>es el nombre del archivo interno.</p>
+
+<p><code>contenido</code> vuelve a ser un objeto de tipo:</p>
+
+<pre><code class="language-python">bytes</code></pre>
+
+<p>pero ahora son los bytes del CSV, no los del ZIP.</p>
+
+<hr>
+
+<h1>Convertir CSV en DataFrame</h1>
+
+<pre><code class="language-python">raw = pd.read_csv(BytesIO(contenido))</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">BytesIO(contenido)</code></pre>
+
+<p>convierte los bytes del CSV en algo parecido a un archivo.</p>
+
+<p>Después:</p>
+
+<pre><code class="language-python">pd.read_csv(...)</code></pre>
+
+<p>interpreta ese archivo como datos separados por comas.</p>
+
+<p>Devuelve:</p>
+
+<pre><code class="language-python">pandas.DataFrame</code></pre>
+
+<p>y se guarda en:</p>
+
+<pre><code class="language-python">raw</code></pre>
+
+<p>El nombre <code>raw</code> significa aproximadamente:</p>
+
+<blockquote>datos crudos/originales.</blockquote>
+
+<p>Esto es una buena práctica porque posteriormente no modifican <code>raw</code>.</p>
+
+<hr>
+
+<h1>Información del dataset</h1>
+
+<pre><code class="language-python">print(&quot;Dataset:&quot;, &quot;camnugent/california-housing-prices&quot;)</code></pre>
+
+<p><code>print()</code> imprime información en consola.</p>
+
+<hr>
+
+<pre><code class="language-python">print(&quot;Archivo:&quot;, &quot;housing.csv&quot;, &quot;| Filas y columnas:&quot;, raw.shape)</code></pre>
+
+<p><code>raw.shape</code> es un atributo de DataFrame.</p>
+
+<p>No lleva <code>()</code> porque <strong>no es un método</strong>.</p>
+
+<p>Devuelve una tupla:</p>
+
+<pre><code class="language-python">(filas, columnas)</code></pre>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">(20640, 10)</code></pre>
+
+<p>Es decir:</p>
+
+<pre><code class="language-text">20.640 filas
+10 columnas</code></pre>
+
+<hr>
+
+<h1>Hash SHA-256</h1>
+
+<pre><code class="language-python">print(&quot;SHA-256:&quot;, hashlib.sha256(contenido).hexdigest())</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">hashlib.sha256(contenido)</code></pre>
+
+<p>calcula SHA-256.</p>
+
+<p>Luego:</p>
+
+<pre><code class="language-python">.hexdigest()</code></pre>
+
+<p>convierte el resultado binario en una cadena hexadecimal legible.</p>
+
+<hr>
+
+<h1>Función propia <code>mostrar</code></h1>
+
+<pre><code class="language-python">def mostrar():</code></pre>
+
+<p><code>def</code> define una función.</p>
+
+<p>Nombre:</p>
+
+<pre><code class="language-python">mostrar</code></pre>
+
+<p>No tiene parámetros.</p>
+
+<hr>
+
+<pre><code class="language-python">    plt.tight_layout()</code></pre>
+
+<p><code>tight_layout()</code> reajusta automáticamente espacios entre gráficos.</p>
+
+<p>Ayuda a evitar situaciones como:</p>
+
+<pre><code class="language-text">títulos superpuestos
+etiquetas cortadas
+gráficos demasiado juntos</code></pre>
+
+<hr>
+
+<pre><code class="language-python">    plt.show()</code></pre>
+
+<p>Muestra las figuras pendientes.</p>
+
+<hr>
+
+<pre><code class="language-python">    plt.close(&quot;all&quot;)</code></pre>
+
+<p>Cierra todas las figuras abiertas.</p>
+
+<p><code>"all"</code> significa todas.</p>
+
+<p>Esto es útil en notebooks porque evita que gráficos anteriores permanezcan abiertos en memoria.</p>
+
+<hr>
+
+<h1>CELDA 3 — Diccionario conceptual de variables</h1>
+
+<p>Define qué representa cada columna.</p>
+
+<p>Las diez originales son:</p>
+
+<table><thead><tr><th>Variable</th><th>Qué representa</th></tr></thead><tbody>
+<tr><td><code>longitude</code></td><td>longitud</td></tr>
+<tr><td><code>latitude</code></td><td>latitud</td></tr>
+<tr><td><code>housing_median_age</code></td><td>edad mediana de viviendas</td></tr>
+<tr><td><code>total_rooms</code></td><td>habitaciones totales de la zona</td></tr>
+<tr><td><code>total_bedrooms</code></td><td>dormitorios totales</td></tr>
+<tr><td><code>population</code></td><td>población</td></tr>
+<tr><td><code>households</code></td><td>hogares</td></tr>
+<tr><td><code>median_income</code></td><td>ingreso mediano escalado</td></tr>
+<tr><td><code>median_house_value</code></td><td>valor mediano de viviendas</td></tr>
+<tr><td><code>ocean_proximity</code></td><td>cercanía al océano</td></tr>
+</tbody></table>
+
+<p>Hay algo muy importante en:</p>
+
+<pre><code class="language-python">total_rooms
+total_bedrooms
+population
+households</code></pre>
+
+<p>Son <strong>totales de la zona censal</strong>, no de una casa.</p>
+
+<p>Por eso posteriormente crearán ratios.</p>
+
+<hr>
+
+<h1>CELDA 4 — Exploración inicial</h1>
+
+<h2>Línea</h2>
+
+<pre><code class="language-python">display(raw.head())</code></pre>
+
+<p><code>head()</code> devuelve las primeras filas.</p>
+
+<p>Por defecto:</p>
+
+<pre><code class="language-python">raw.head()</code></pre>
+
+<p>equivale a:</p>
+
+<pre><code class="language-python">raw.head(5)</code></pre>
+
+<p>Es decir, primeras 5.</p>
+
+<p>También podrías escribir:</p>
+
+<pre><code class="language-python">raw.head(10)</code></pre>
+
+<p>para obtener diez.</p>
+
+<p>Sirve para inspeccionar visualmente los datos.</p>
+
+<hr>
+
+<h1><code>raw.info()</code></h1>
+
+<pre><code class="language-python">raw.info()</code></pre>
+
+<p><code>info()</code> proporciona información estructural.</p>
+
+<p>El resultado indica:</p>
+
+<pre><code class="language-text">20640 entries
+10 columns</code></pre>
+
+<p>Además muestra:</p>
+
+<pre><code class="language-text">Non-Null Count
+Dtype</code></pre>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">total_bedrooms  20433 non-null</code></pre>
+
+<p>Pero tenemos:</p>
+
+<pre><code class="language-text">20640 filas</code></pre>
+
+<p>Entonces:</p>
+
+<pre><code class="language-text">20640 - 20433 = 207</code></pre>
+
+<p>hay <strong>207 valores faltantes</strong>.</p>
+
+<hr>
+
+<p>Los tipos son:</p>
+
+<pre><code class="language-text">float64 → números decimales
+object  → generalmente texto</code></pre>
+
+<p><code>ocean_proximity</code> es:</p>
+
+<pre><code class="language-text">object</code></pre>
+
+<p>porque contiene categorías como:</p>
+
+<pre><code class="language-text">NEAR BAY
+INLAND
+NEAR OCEAN</code></pre>
+
+<hr>
+
+<h1>Estadística descriptiva</h1>
+
+<pre><code class="language-python">display(raw.describe().round(2))</code></pre>
+
+<p>Aquí se encadenan dos métodos:</p>
+
+<pre><code class="language-python">raw.describe()</code></pre>
+
+<p>y:</p>
+
+<pre><code class="language-python">.round(2)</code></pre>
+
+<h2><code>describe()</code></h2>
+
+<p>Para columnas numéricas calcula:</p>
+
+<pre><code class="language-text">count
+mean
+std
+min
+25%
+50%
+75%
+max</code></pre>
+
+<h3><code>count</code></h3>
+
+<p>cantidad de valores no nulos.</p>
+
+<h3><code>mean</code></h3>
+
+<p>media aritmética.</p>
+
+<h3><code>std</code></h3>
+
+<p>desviación estándar.</p>
+
+<p>Mide dispersión.</p>
+
+<h3><code>min</code></h3>
+
+<p>mínimo.</p>
+
+<h3><code>25%</code></h3>
+
+<p>primer cuartil Q1.</p>
+
+<p>25% de los datos están por debajo aproximadamente.</p>
+
+<h3><code>50%</code></h3>
+
+<p>mediana.</p>
+
+<h3><code>75%</code></h3>
+
+<p>tercer cuartil.</p>
+
+<h3><code>max</code></h3>
+
+<p>máximo.</p>
+
+<hr>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">median_house_value
+
+mean     206855.82
+50%      179700
+max      500001</code></pre>
+
+<p>La media es mayor que la mediana.</p>
+
+<p>Eso ya sugiere cierta asimetría hacia precios altos.</p>
+
+<hr>
+
+<h2><code>.round(2)</code></h2>
+
+<p>Redondea a dos decimales.</p>
+
+<p>No necesariamente modifica los valores originales.</p>
+
+<p>Es principalmente presentación.</p>
+
+<hr>
+
+<h1>Buscar nulos</h1>
+
+<pre><code class="language-python">nulos = pd.DataFrame({
+    &quot;cantidad&quot;: raw.isna().sum(),
+    &quot;porcentaje&quot;: raw.isna().mean() * 100
+})</code></pre>
+
+<p>Esta línea es muy importante.</p>
+
+<h2><code>raw.isna()</code></h2>
+
+<p>Genera un DataFrame de booleanos.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">valor normal → False
+NaN          → True</code></pre>
+
+<p><code>NaN</code> significa:</p>
+
+<blockquote>Not a Number.</blockquote>
+
+<p>Se utiliza para representar datos faltantes.</p>
+
+<hr>
+
+<h2><code>.sum()</code></h2>
+
+<p>En Python/Pandas:</p>
+
+<pre><code class="language-text">True  ≈ 1
+False ≈ 0</code></pre>
+
+<p>Por eso:</p>
+
+<pre><code class="language-python">raw.isna().sum()</code></pre>
+
+<p>cuenta cuántos <code>True</code> existen.</p>
+
+<p>Resultado para dormitorios:</p>
+
+<pre><code class="language-text">207</code></pre>
+
+<hr>
+
+<h2><code>.mean()</code></h2>
+
+<p>Si:</p>
+
+<pre><code class="language-text">True = 1
+False = 0</code></pre>
+
+<p>la media de los booleanos representa una proporción.</p>
+
+<p>Entonces:</p>
+
+<pre><code class="language-python">raw.isna().mean() * 100</code></pre>
+
+<p>produce porcentaje de valores faltantes.</p>
+
+<p><code>total_bedrooms</code>:</p>
+
+<pre><code class="language-text">1.0%</code></pre>
+
+<p>aproximadamente.</p>
+
+<hr>
+
+<h1>Crear un DataFrame manualmente</h1>
+
+<pre><code class="language-python">pd.DataFrame({
+    &quot;cantidad&quot;: ...,
+    &quot;porcentaje&quot;: ...
+})</code></pre>
+
+<p>El <code>{}</code> representa un diccionario Python.</p>
+
+<p>Tiene estructura:</p>
+
+<pre><code class="language-python">{
+    clave: valor,
+    clave: valor
+}</code></pre>
+
+<p>Aquí las claves se transforman en columnas:</p>
+
+<pre><code class="language-text">cantidad
+porcentaje</code></pre>
+
+<hr>
+
+<pre><code class="language-python">display(nulos.round(2))</code></pre>
+
+<p>Muestra la tabla con dos decimales.</p>
+
+<hr>
+
+<h1>Buscar filas duplicadas</h1>
+
+<pre><code class="language-python">print(&quot;Filas exactamente duplicadas:&quot;, raw.duplicated().sum())</code></pre>
+
+<p><code>duplicated()</code> marca filas repetidas.</p>
+
+<p>Si una fila tiene exactamente los mismos valores que una anterior:</p>
+
+<pre><code class="language-text">True</code></pre>
+
+<p>Después <code>.sum()</code> las cuenta.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">0</code></pre>
+
+<p>No existen filas completamente idénticas.</p>
+
+<hr>
+
+<h1>Contar categorías</h1>
+
+<pre><code class="language-python">display(raw[&quot;ocean_proximity&quot;].value_counts().rename(&quot;zonas&quot;))</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">raw[&quot;ocean_proximity&quot;]</code></pre>
+
+<p>selecciona una columna.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-python">Series</code></pre>
+
+<hr>
+
+<pre><code class="language-python">.value_counts()</code></pre>
+
+<p>cuenta cuántas veces aparece cada valor.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">&lt;1H OCEAN     9136
+INLAND        6551
+NEAR OCEAN    2658
+NEAR BAY      2290
+ISLAND           5</code></pre>
+
+<hr>
+
+<pre><code class="language-python">.rename(&quot;zonas&quot;)</code></pre>
+
+<p>pone nombre a la Series resultante.</p>
+
+<p>No cambia las categorías.</p>
+
+<hr>
+
+<p>Esto también revela algo muy importante:</p>
+
+<pre><code class="language-text">ISLAND = solamente 5 zonas</code></pre>
+
+<p>Por tanto cualquier conclusión sobre <code>ISLAND</code> tiene una muestra extremadamente pequeña.</p>
+
+<hr>
+
+<h1>Buscar posibles topes</h1>
+
+<pre><code class="language-python">topes = pd.DataFrame({</code></pre>
+
+<p>Se crea otra tabla.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;maximo&quot;: raw[[&quot;median_house_value&quot;, &quot;housing_median_age&quot;, &quot;median_income&quot;]].max(),</code></pre>
+
+<p>Aquí:</p>
+
+<pre><code class="language-python">raw[[...]]</code></pre>
+
+<p>tiene <strong>doble corchete</strong>.</p>
+
+<p>Eso selecciona varias columnas.</p>
+
+<p>Un corchete:</p>
+
+<pre><code class="language-python">raw[&quot;median_income&quot;]</code></pre>
+
+<p>→ Series.</p>
+
+<p>Dos:</p>
+
+<pre><code class="language-python">raw[[&quot;median_income&quot;, &quot;median_house_value&quot;]]</code></pre>
+
+<p>→ DataFrame.</p>
+
+<hr>
+
+<p><code>.max()</code></p>
+
+<p>obtiene máximo por columna.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">median_house_value    500001
+housing_median_age        52
+median_income             15</code></pre>
+
+<hr>
+
+<p>La siguiente parte:</p>
+
+<pre><code class="language-python">raw[[&quot;median_house_value&quot;, &quot;housing_median_age&quot;, &quot;median_income&quot;]].eq(
+    raw[[&quot;median_house_value&quot;, &quot;housing_median_age&quot;, &quot;median_income&quot;]].max()
+).sum()</code></pre>
+
+<p>parece complicada pero se puede separar.</p>
+
+<p>Tenemos máximos:</p>
+
+<pre><code class="language-text">precio = 500001
+edad   = 52
+ingreso = 15</code></pre>
+
+<p><code>.eq()</code></p>
+
+<p>significa:</p>
+
+<blockquote>equal → igual a.</blockquote>
+
+<p>Compara cada valor contra el máximo correspondiente.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">500001 == 500001 → True
+250000 == 500001 → False</code></pre>
+
+<p>Finalmente:</p>
+
+<pre><code class="language-python">.sum()</code></pre>
+
+<p>cuenta cuántos están exactamente en el máximo.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">precio máximo: 965 zonas
+edad máxima: 1273
+ingreso máximo: 49</code></pre>
+
+<hr>
+
+<h1>Porcentaje</h1>
+
+<pre><code class="language-python">topes[&quot;porcentaje&quot;] = topes[&quot;zonas_en_maximo&quot;] / len(raw) * 100</code></pre>
+
+<p><code>len(raw)</code>:</p>
+
+<pre><code class="language-text">20640</code></pre>
+
+<p>Para precio:</p>
+
+<pre><code class="language-text">965 / 20640 × 100
+≈ 4.675%</code></pre>
+
+<p>Es llamativo que casi <strong>4,7%</strong> de las zonas tengan exactamente:</p>
+
+<pre><code class="language-text">500001</code></pre>
+
+<p>Eso sugiere que el dataset probablemente tiene un <strong>tope/censura superior</strong> del precio.</p>
+
+<p>Es decir, algunas viviendas podrían realmente haber valido:</p>
+
+<pre><code class="language-text">510.000
+600.000
+800.000</code></pre>
+
+<p>pero el dataset solamente conserva:</p>
+
+<pre><code class="language-text">500.001</code></pre>
+
+<p>Por eso el análisis trata ese máximo con cautela.</p>
+
+<hr>
+
+<h1>CELDA 5 — Decisiones de limpieza</h1>
+
+<p>La celda Markdown explica un principio importante:</p>
+
+<blockquote>No limpiar significa «eliminar todo lo raro».</blockquote>
+
+<p>El notebook decide conservar datos originales siempre que no haya razones suficientes para considerarlos incorrectos.</p>
+
+<p>Por ejemplo, los outliers pueden ser casos reales.</p>
+
+<p>Se crean dos bases:</p>
+
+<pre><code class="language-text">raw
+↓
+df
+↓
+df_clean</code></pre>
+
+<p><code>raw</code></p>
+
+<p>Datos originales.</p>
+
+<p><code>df</code></p>
+
+<p>Datos preparados.</p>
+
+<p><code>df_clean</code></p>
+
+<p>Subconjunto curado con ciertos valores extremos eliminados.</p>
+
+<hr>
+
+<h1>CELDA 6 — Limpieza y feature engineering</h1>
+
+<h2>Copiar datos</h2>
+
+<pre><code class="language-python">df = raw.copy()</code></pre>
+
+<p><code>copy()</code> crea una copia del DataFrame.</p>
+
+<p>Esto es importante.</p>
+
+<p>Si hiciéramos:</p>
+
+<pre><code class="language-python">df = raw</code></pre>
+
+<p>ambos nombres podrían referirse al mismo objeto.</p>
+
+<p>Entonces cambios en <code>df</code> podrían afectar <code>raw</code>.</p>
+
+<p>Con:</p>
+
+<pre><code class="language-python">raw.copy()</code></pre>
+
+<p>preservamos los originales.</p>
+
+<hr>
+
+<h1>Limpiar texto</h1>
+
+<pre><code class="language-python">df[&quot;ocean_proximity&quot;] = df[&quot;ocean_proximity&quot;].str.strip().str.upper()</code></pre>
+
+<p>Se aplica limpieza a una columna de texto.</p>
+
+<h3><code>.str</code></h3>
+
+<p>Permite utilizar operaciones de texto sobre cada elemento de una Series.</p>
+
+<h3><code>.strip()</code></h3>
+
+<p>Elimina espacios al principio y final.</p>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">&quot; NEAR OCEAN &quot;</code></pre>
+
+<p>pasa a:</p>
+
+<pre><code class="language-text">&quot;NEAR OCEAN&quot;</code></pre>
+
+<h3><code>.upper()</code></h3>
+
+<p>Convierte a mayúsculas.</p>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">&quot;Near Ocean&quot;</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">&quot;NEAR OCEAN&quot;</code></pre>
+
+<p>Esto evita categorías duplicadas accidentalmente por diferencias de formato.</p>
+
+<hr>
+
+<h1><code>assert</code></h1>
+
+<pre><code class="language-python">assert (df[[&quot;households&quot;, &quot;total_rooms&quot;]] &gt; 0).all().all(), &quot;Revisar denominadores&quot;</code></pre>
+
+<p><code>assert</code> significa:</p>
+
+<blockquote>verificá que esta condición sea verdadera. Si no, detén el programa.</blockquote>
+
+<p>Se seleccionan:</p>
+
+<pre><code class="language-python">[&quot;households&quot;, &quot;total_rooms&quot;]</code></pre>
+
+<p>porque luego serán denominadores.</p>
+
+<hr>
+
+<pre><code class="language-python">&gt; 0</code></pre>
+
+<p>comprueba que todos sean positivos.</p>
+
+<p>Después:</p>
+
+<pre><code class="language-python">.all()</code></pre>
+
+<p>comprueba cada columna.</p>
+
+<p>Segundo:</p>
+
+<pre><code class="language-python">.all()</code></pre>
+
+<p>comprueba el resultado general.</p>
+
+<p>Si aparece algún cero o negativo:</p>
+
+<pre><code class="language-python">AssertionError: Revisar denominadores</code></pre>
+
+<p>Esto evita una división problemática:</p>
+
+<pre><code class="language-text">x / 0</code></pre>
+
+<hr>
+
+<h1>Marcar los valores que faltan</h1>
+
+<pre><code class="language-python">df[&quot;bedrooms_imputados&quot;] = df[&quot;total_bedrooms&quot;].isna()</code></pre>
+
+<p>Se crea una nueva columna booleana.</p>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">total_bedrooms   bedrooms_imputados
+
+500              False
+NaN              True
+300              False</code></pre>
+
+<p>Esto es excelente porque permite conservar información sobre qué datos fueron modificados.</p>
+
+<p>Hay:</p>
+
+<pre><code class="language-text">207 True</code></pre>
+
+<hr>
+
+<h1>Calcular mediana</h1>
+
+<pre><code class="language-python">mediana_dormitorios = df[&quot;total_bedrooms&quot;].median()</code></pre>
+
+<p><code>.median()</code> calcula la mediana.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">435</code></pre>
+
+<p>La mediana es el valor central.</p>
+
+<p>Se prefiere a veces frente a la media para imputación porque es menos sensible a valores extremos.</p>
+
+<hr>
+
+<h1>Imputar</h1>
+
+<pre><code class="language-python">df[&quot;total_bedrooms&quot;] = df[&quot;total_bedrooms&quot;].fillna(mediana_dormitorios)</code></pre>
+
+<p><code>fillna()</code> reemplaza valores faltantes.</p>
+
+<p>Aquí:</p>
+
+<pre><code class="language-python">fillna(435)</code></pre>
+
+<p>Entonces las 207 filas con <code>NaN</code> reciben:</p>
+
+<pre><code class="language-text">435</code></pre>
+
+<p>Esto se denomina:</p>
+
+<blockquote>imputación de datos faltantes.</blockquote>
+
+<p>No significa que sepamos que realmente tenían 435 dormitorios.</p>
+
+<p>Es una decisión estadística para evitar perder esas filas.</p>
+
+<hr>
+
+<h1>Crear habitaciones por hogar</h1>
+
+<pre><code class="language-python">df[&quot;rooms_per_household&quot;] = df[&quot;total_rooms&quot;] / df[&quot;households&quot;]</code></pre>
+
+<p>Nueva variable:</p>
+
+<div class='formula'><pre>\[
+\text{rooms per household}
+=
+\frac{\text{total rooms}}{\text{households}}
+\]</pre></div>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">total_rooms = 2000
+households = 400</code></pre>
+
+<p>entonces:</p>
+
+<pre><code class="language-text">2000 / 400 = 5</code></pre>
+
+<p>Interpretación:</p>
+
+<blockquote>aproximadamente 5 habitaciones por hogar en esa zona.</blockquote>
+
+<p>Es más útil que simplemente saber que existen 2.000 habitaciones, porque una zona grande naturalmente tiene más habitaciones.</p>
+
+<hr>
+
+<h1>Dormitorios respecto a habitaciones</h1>
+
+<pre><code class="language-python">df[&quot;bedrooms_per_room&quot;] = df[&quot;total_bedrooms&quot;] / df[&quot;total_rooms&quot;]</code></pre>
+
+<p>Calcula:</p>
+
+<div class='formula'><pre>\[
+\frac{\text{dormitorios}}{\text{habitaciones}}
+\]</pre></div>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">400 dormitorios
+2000 habitaciones</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">0.20</code></pre>
+
+<p>El 20% aproximadamente de las habitaciones contabilizadas son dormitorios.</p>
+
+<hr>
+
+<h1>Población por hogar</h1>
+
+<pre><code class="language-python">df[&quot;population_per_household&quot;] = df[&quot;population&quot;] / df[&quot;households&quot;]</code></pre>
+
+<p>Calcula aproximadamente cuántas personas hay por hogar.</p>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">1200 personas / 400 hogares = 3</code></pre>
+
+<hr>
+
+<h1>Guardar nombres de ratios</h1>
+
+<pre><code class="language-python">ratios = [&quot;rooms_per_household&quot;, &quot;bedrooms_per_room&quot;, &quot;population_per_household&quot;]</code></pre>
+
+<p>Esto es una lista Python.</p>
+
+<p>La variable <code>ratios</code> permite reutilizar esos nombres sin escribirlos repetidamente.</p>
+
+<hr>
+
+<h1>Calcular percentil 99</h1>
+
+<pre><code class="language-python">cortes_p99 = df[ratios].quantile(0.99)</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">df[ratios]</code></pre>
+
+<p>es equivalente a seleccionar las tres columnas.</p>
+
+<p><code>quantile(0.99)</code> calcula el percentil 99.</p>
+
+<h3>¿Qué significa P99?</h3>
+
+<p>Es un valor por debajo del cual se encuentra aproximadamente el 99% de los datos.</p>
+
+<p>Resultados:</p>
+
+<pre><code class="language-text">rooms_per_household       10.357
+bedrooms_per_room          0.4165
+population_per_household   5.3948</code></pre>
+
+<p>Eso significa que aproximadamente 99% de las zonas tienen:</p>
+
+<pre><code class="language-text">rooms_per_household ≤ 10.357</code></pre>
+
+<p>etc.</p>
+
+<p>Los valores superiores forman aproximadamente el extremo 1%.</p>
+
+<hr>
+
+<h1>Quitar máximo del precio</h1>
+
+<pre><code class="language-python">sin_tope = df[&quot;median_house_value&quot;] &lt; df[&quot;median_house_value&quot;].max()</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">df[&quot;median_house_value&quot;].max()</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">500001</code></pre>
+
+<p>Entonces:</p>
+
+<pre><code class="language-python">df[&quot;median_house_value&quot;] &lt; 500001</code></pre>
+
+<p>genera una Series booleana.</p>
+
+<p>Para zonas en el máximo:</p>
+
+<pre><code class="language-text">False</code></pre>
+
+<p>para las demás:</p>
+
+<pre><code class="language-text">True</code></pre>
+
+<hr>
+
+<h1>Ver ratios dentro del P99</h1>
+
+<pre><code class="language-python">ratios_en_rango = df[ratios].le(cortes_p99).all(axis=1)</code></pre>
+
+<p><code>.le()</code></p>
+
+<p>significa:</p>
+
+<blockquote>less than or equal → menor o igual.</blockquote>
+
+<p>Es equivalente conceptualmente a:</p>
+
+<pre><code class="language-python">df[ratios] &lt;= cortes_p99</code></pre>
+
+<hr>
+
+<p>Luego:</p>
+
+<pre><code class="language-python">.all(axis=1)</code></pre>
+
+<p><code>axis=1</code> significa evaluar horizontalmente por fila.</p>
+
+<p>En Pandas:</p>
+
+<pre><code class="language-text">axis=0 → por columnas
+axis=1 → por filas</code></pre>
+
+<p>Entonces pregunta:</p>
+
+<blockquote>¿Los tres ratios de esta fila están dentro de su P99?</blockquote>
+
+<p>Solo si los tres son <code>True</code>, el resultado es <code>True</code>.</p>
+
+<hr>
+
+<h1>Crear base curada</h1>
+
+<pre><code class="language-python">df_clean = df.loc[sin_tope &amp; ratios_en_rango].copy()</code></pre>
+
+<p><code>.loc[]</code> se utiliza para seleccionar filas/columnas por etiquetas o condiciones.</p>
+
+<p>Aquí utiliza una máscara booleana.</p>
+
+<pre><code class="language-python">sin_tope &amp; ratios_en_rango</code></pre>
+
+<p><code>&amp;</code> significa AND lógico.</p>
+
+<p>La fila debe cumplir:</p>
+
+<pre><code class="language-text">precio &lt; máximo
+Y
+todos los ratios ≤ P99</code></pre>
+
+<p>Después:</p>
+
+<pre><code class="language-python">.copy()</code></pre>
+
+<p>crea una copia independiente.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">df        = 20.640 filas
+df_clean  = 19.087 filas</code></pre>
+
+<p>Se excluyen:</p>
+
+<pre><code class="language-text">1.553 filas</code></pre>
+
+<p>aproximadamente:</p>
+
+<pre><code class="language-text">7,52%</code></pre>
+
+<hr>
+
+<h1>Mostrar P99</h1>
+
+<pre><code class="language-python">display(cortes_p99.to_frame(&quot;P99&quot;))</code></pre>
+
+<p><code>cortes_p99</code> es una Series.</p>
+
+<p><code>.to_frame("P99")</code></p>
+
+<p>la convierte en DataFrame y coloca:</p>
+
+<pre><code class="language-text">P99</code></pre>
+
+<p>como nombre de columna.</p>
+
+<hr>
+
+<h1>Auditoría</h1>
+
+<pre><code class="language-python">auditoria = pd.Series({</code></pre>
+
+<p>En vez de DataFrame, aquí crean una <code>Series</code>.</p>
+
+<p>Contiene un conjunto de indicadores.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;filas_originales&quot;: len(raw)</code></pre>
+
+<p>→ 20.640.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;filas_preparadas&quot;: len(df)</code></pre>
+
+<p>→ 20.640.</p>
+
+<p>No se eliminaron filas durante preparación.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;filas_curadas&quot;: len(df_clean)</code></pre>
+
+<p>→ 19.087.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;filas_excluidas_curado&quot;: len(df) - len(df_clean)</code></pre>
+
+<div class='formula'><pre>\[
+20640-19087=1553
+\]</pre></div>
+
+<hr>
+
+<pre><code class="language-python">&quot;porcentaje_excluido&quot;: (len(df) - len(df_clean)) / len(df) * 100</code></pre>
+
+<p>→ aproximadamente 7,52%.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;dormitorios_imputados&quot;: int(df[&quot;bedrooms_imputados&quot;].sum())</code></pre>
+
+<p><code>sum()</code> cuenta los <code>True</code>.</p>
+
+<p><code>int()</code> convierte explícitamente el resultado en entero Python.</p>
+
+<p>→ 207.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;mediana_imputacion&quot;: mediana_dormitorios</code></pre>
+
+<p>→ 435.</p>
+
+<hr>
+
+<pre><code class="language-python">df[&quot;median_house_value&quot;].eq(df[&quot;median_house_value&quot;].max()).sum()</code></pre>
+
+<p>cuenta precios exactamente iguales al máximo.</p>
+
+<p>→ 965.</p>
+
+<hr>
+
+<h1>Verificar que no quedan NaN</h1>
+
+<pre><code class="language-python">assert not df.select_dtypes(&quot;number&quot;).isna().any().any()</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">df.select_dtypes(&quot;number&quot;)</code></pre>
+
+<p>selecciona únicamente columnas numéricas.</p>
+
+<p>Después:</p>
+
+<pre><code class="language-python">.isna()</code></pre>
+
+<p>busca NaN.</p>
+
+<p>Luego:</p>
+
+<pre><code class="language-python">.any().any()</code></pre>
+
+<p>pregunta:</p>
+
+<blockquote>¿existe al menos algún <code>True</code>?</blockquote>
+
+<p>Finalmente:</p>
+
+<pre><code class="language-python">not</code></pre>
+
+<p>lo invierte.</p>
+
+<p>La condición final significa:</p>
+
+<blockquote>No debe existir ningún valor faltante en las columnas numéricas.</blockquote>
+
+<hr>
+
+<h1>Verificar infinitos</h1>
+
+<pre><code class="language-python">assert np.isfinite(df.select_dtypes(&quot;number&quot;)).all().all()</code></pre>
+
+<p><code>np.isfinite()</code> comprueba si cada número es finito.</p>
+
+<p>Valores normales:</p>
+
+<pre><code class="language-text">5
+-20
+3.1416</code></pre>
+
+<p>→ <code>True</code>.</p>
+
+<p>Valores problemáticos:</p>
+
+<pre><code class="language-text">inf
+-inf
+NaN</code></pre>
+
+<p>→ <code>False</code>.</p>
+
+<p>Después <code>.all().all()</code> exige que absolutamente todos sean válidos.</p>
+
+<hr>
+
+<h1>CELDA 8 — Histogramas</h1>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">columnas = [...]</code></pre>
+
+<p>guarda nueve columnas que se van a representar.</p>
+
+<p>Después:</p>
+
+<pre><code class="language-python">etiquetas = [...]</code></pre>
+
+<p>guarda los textos amigables que aparecerán en los gráficos.</p>
+
+<p>La posición de ambas listas corresponde.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">columnas[0]  = median_house_value
+etiquetas[0] = Valor mediano (USD de 1990)</code></pre>
+
+<hr>
+
+<h1>Crear cuadrícula</h1>
+
+<pre><code class="language-python">fig, ejes = plt.subplots(3, 3, figsize=(13, 10))</code></pre>
+
+<p><code>plt.subplots()</code> crea figura y ejes.</p>
+
+<h3><code>3, 3</code></h3>
+
+<p>3 filas × 3 columnas.</p>
+
+<p>Total:</p>
+
+<pre><code class="language-text">9 gráficos</code></pre>
+
+<h3><code>figsize=(13,10)</code></h3>
+
+<p>tamaño de la figura en pulgadas:</p>
+
+<pre><code class="language-text">13 de ancho
+10 de alto</code></pre>
+
+<p>Devuelve dos objetos:</p>
+
+<pre><code class="language-python">fig
+ejes</code></pre>
+
+<p><code>fig</code> = figura completa.</p>
+
+<p><code>ejes</code> = matriz de gráficos individuales.</p>
+
+<hr>
+
+<h1>Bucle</h1>
+
+<pre><code class="language-python">for columna, etiqueta, eje in zip(columnas, etiquetas, ejes.flat):</code></pre>
+
+<p><code>zip()</code> combina elementos de varias secuencias.</p>
+
+<p>Algo como:</p>
+
+<pre><code class="language-text">median_house_value + Valor mediano + gráfico 1
+median_income      + Ingreso       + gráfico 2
+...</code></pre>
+
+<p><code>ejes.flat</code> transforma la matriz 3×3 de ejes en una secuencia plana de 9 elementos.</p>
+
+<hr>
+
+<h1>Histograma</h1>
+
+<pre><code class="language-python">sns.histplot(data=df, x=columna, bins=35, ax=eje)</code></pre>
+
+<p><code>sns.histplot()</code> crea histograma.</p>
+
+<h3><code>data=df</code></h3>
+
+<p>DataFrame utilizado.</p>
+
+<h3><code>x=columna</code></h3>
+
+<p>variable para eje X.</p>
+
+<p>Como <code>columna</code> va cambiando dentro del <code>for</code>, cada gráfico utiliza una variable distinta.</p>
+
+<h3><code>bins=35</code></h3>
+
+<p>divide el rango de valores en 35 intervalos.</p>
+
+<p>Un histograma cuenta cuántos casos caen dentro de cada intervalo.</p>
+
+<h3><code>ax=eje</code></h3>
+
+<p>le indica exactamente en qué subplot dibujar.</p>
+
+<hr>
+
+<h1>Etiquetas</h1>
+
+<pre><code class="language-python">eje.set(xlabel=etiqueta, ylabel=&quot;Número de zonas&quot;, title=etiqueta)</code></pre>
+
+<p>Configura varias propiedades del eje simultáneamente.</p>
+
+<p><code>xlabel</code></p>
+
+<p>texto eje X.</p>
+
+<p><code>ylabel</code></p>
+
+<p>texto eje Y.</p>
+
+<p><code>title</code></p>
+
+<p>título.</p>
+
+<hr>
+
+<h1>Título general</h1>
+
+<pre><code class="language-python">fig.suptitle(&quot;Distribuciones de las características de vivienda&quot;)</code></pre>
+
+<p><code>suptitle()</code> pone título a toda la figura.</p>
+
+<p>No a un subplot específico.</p>
+
+<hr>
+
+<pre><code class="language-python">mostrar()</code></pre>
+
+<p>ejecuta la función creada anteriormente:</p>
+
+<pre><code class="language-python">tight_layout()
+show()
+close()</code></pre>
+
+<hr>
+
+<h1>CELDA 10 — Costa y precio</h1>
+
+<pre><code class="language-python">por_costa = df_clean.groupby(&quot;ocean_proximity&quot;)[&quot;median_house_value&quot;].agg(
+    [&quot;count&quot;, &quot;mean&quot;, &quot;median&quot;]
+)</code></pre>
+
+<p>Esta línea es central.</p>
+
+<h2><code>.groupby("ocean_proximity")</code></h2>
+
+<p>Agrupa filas por categoría.</p>
+
+<p>Es conceptualmente:</p>
+
+<pre><code class="language-text">INLAND       → todas las filas inland
+NEAR BAY     → todas las filas near bay
+NEAR OCEAN   → todas las filas near ocean
+...</code></pre>
+
+<p>Después:</p>
+
+<pre><code class="language-python">[&quot;median_house_value&quot;]</code></pre>
+
+<p>dice:</p>
+
+<blockquote>dentro de cada grupo me interesa el precio.</blockquote>
+
+<p>Finalmente:</p>
+
+<pre><code class="language-python">.agg([&quot;count&quot;, &quot;mean&quot;, &quot;median&quot;])</code></pre>
+
+<p><code>agg</code> significa <strong>aggregate</strong>.</p>
+
+<p>Calcula tres funciones para cada grupo:</p>
+
+<p><code>count</code></p>
+
+<p>cantidad.</p>
+
+<p><code>mean</code></p>
+
+<p>media.</p>
+
+<p><code>median</code></p>
+
+<p>mediana.</p>
+
+<hr>
+
+<p>Los resultados son muy interesantes:</p>
+
+<pre><code class="language-text">INLAND
+mediana = USD 107.200
+
+NEAR OCEAN
+mediana = USD 219.500
+
+NEAR BAY
+mediana = USD 220.150</code></pre>
+
+<p>Descriptivamente, las zonas interiores tienen valores mucho menores.</p>
+
+<p>Pero todavía:</p>
+
+<blockquote>asociación ≠ causalidad.</blockquote>
+
+<hr>
+
+<h1>Dos gráficos</h1>
+
+<pre><code class="language-python">fig, ejes = plt.subplots(1, 2, figsize=(13, 4))</code></pre>
+
+<p>Una fila, dos columnas.</p>
+
+<hr>
+
+<h1>Boxplot</h1>
+
+<pre><code class="language-python">sns.boxplot(
+    data=df_clean,
+    x=&quot;ocean_proximity&quot;,
+    y=&quot;median_house_value&quot;,
+    showfliers=False,
+    ax=ejes[0]
+)</code></pre>
+
+<h3><code>data=df_clean</code></h3>
+
+<p>usa datos curados.</p>
+
+<h3><code>x</code></h3>
+
+<p>categoría de costa.</p>
+
+<h3><code>y</code></h3>
+
+<p>precio.</p>
+
+<h3><code>showfliers=False</code></h3>
+
+<p>oculta visualmente los puntos considerados outliers del boxplot.</p>
+
+<p>Importante:</p>
+
+<blockquote>no los elimina del DataFrame.</blockquote>
+
+<p>Simplemente no los dibuja.</p>
+
+<hr>
+
+<p>Un boxplot muestra principalmente:</p>
+
+<pre><code class="language-text">Q1
+mediana
+Q3
+bigotes</code></pre>
+
+<p>La caja contiene el 50% central de los datos.</p>
+
+<hr>
+
+<h1>Filtrar ingresos comparables</h1>
+
+<pre><code class="language-python">comparable = df_clean.loc[
+    df_clean[&quot;median_income&quot;].ge(3)
+    &amp;
+    df_clean[&quot;median_income&quot;].lt(5)
+]</code></pre>
+
+<p><code>.ge(3)</code></p>
+
+<p>significa:</p>
+
+<pre><code class="language-text">greater than or equal
+&gt;= 3</code></pre>
+
+<p><code>.lt(5)</code></p>
+
+<p>significa:</p>
+
+<pre><code class="language-text">less than
+&lt; 5</code></pre>
+
+<p>Entonces:</p>
+
+<pre><code class="language-text">3 ≤ median_income &lt; 5</code></pre>
+
+<p>¿Por qué?</p>
+
+<p>Porque si simplemente comparamos costa/precio, una explicación podría ser:</p>
+
+<blockquote>las zonas costeras también tienen habitantes con mayores ingresos.</blockquote>
+
+<p>Restringiendo el ingreso entre 3 y 5 se intenta hacer una comparación más homogénea.</p>
+
+<p>No elimina toda confusión, pero mejora la comparación.</p>
+
+<hr>
+
+<h1>Histograma por categoría</h1>
+
+<pre><code class="language-python">sns.histplot(
+    data=comparable,
+    x=&quot;median_house_value&quot;,
+    hue=&quot;ocean_proximity&quot;,
+    bins=30,
+    element=&quot;step&quot;,
+    stat=&quot;density&quot;,
+    common_norm=False,
+    ax=ejes[1]
+)</code></pre>
+
+<h3><code>hue="ocean_proximity"</code></h3>
+
+<p>separa visualmente cada categoría por color.</p>
+
+<h3><code>bins=30</code></h3>
+
+<p>30 intervalos.</p>
+
+<h3><code>element="step"</code></h3>
+
+<p>dibuja contornos tipo escalón en lugar de barras completamente rellenas.</p>
+
+<h3><code>stat="density"</code></h3>
+
+<p>el eje Y representa densidad en vez de número bruto de observaciones.</p>
+
+<p>Esto ayuda a comparar grupos de tamaños diferentes.</p>
+
+<h3><code>common_norm=False</code></h3>
+
+<p>cada categoría se normaliza independientemente.</p>
+
+<p>Sin esto, un grupo grande podría dominar el gráfico simplemente por tener más observaciones.</p>
+
+<hr>
+
+<p>Incluso para ingreso entre 3 y 5:</p>
+
+<pre><code class="language-text">INLAND       mediana 128.300
+NEAR OCEAN   mediana 234.600</code></pre>
+
+<p>Sigue apareciendo una diferencia considerable.</p>
+
+<hr>
+
+<h1>CELDA 12 — Correlaciones</h1>
+
+<p>Variables:</p>
+
+<pre><code class="language-python">variables = [
+    &quot;median_house_value&quot;,
+    &quot;median_income&quot;,
+    &quot;housing_median_age&quot;,
+    &quot;rooms_per_household&quot;,
+    &quot;bedrooms_per_room&quot;,
+    &quot;population_per_household&quot;
+]</code></pre>
+
+<hr>
+
+<h1>Correlación Pearson</h1>
+
+<pre><code class="language-python">correlaciones = df[variables].corr()</code></pre>
+
+<p><code>.corr()</code> calcula por defecto correlación de <strong>Pearson</strong>.</p>
+
+<p>Pearson mide principalmente asociación lineal.</p>
+
+<p>Va aproximadamente de:</p>
+
+<pre><code class="language-text">-1 a +1</code></pre>
+
+<p>Interpretación:</p>
+
+<pre><code class="language-text">+1 → relación lineal positiva perfecta
+ 0 → poca/no relación lineal
+-1 → relación lineal negativa perfecta</code></pre>
+
+<hr>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">median_income vs median_house_value = 0.688</code></pre>
+
+<p>Es una asociación positiva relativamente fuerte.</p>
+
+<p>Es decir:</p>
+
+<blockquote>las zonas con mayor ingreso mediano tienden a tener valores de vivienda mayores.</blockquote>
+
+<hr>
+
+<pre><code class="language-python">corr_clean = df_clean[variables].corr()</code></pre>
+
+<p>Hace exactamente lo mismo, pero sobre los datos curados.</p>
+
+<p>Resultado ingreso/precio:</p>
+
+<pre><code class="language-text">0.653</code></pre>
+
+<hr>
+
+<h1>Comparar Pearson y Spearman</h1>
+
+<pre><code class="language-python">pd.DataFrame({
+    &quot;Pearson_base&quot;: correlaciones[&quot;median_house_value&quot;],
+    &quot;Pearson_curado&quot;: corr_clean[&quot;median_house_value&quot;],
+    &quot;Spearman_curado&quot;:
+        df_clean[variables].corr(method=&quot;spearman&quot;)[&quot;median_house_value&quot;]
+})</code></pre>
+
+<p>Aquí aparece:</p>
+
+<pre><code class="language-python">corr(method=&quot;spearman&quot;)</code></pre>
+
+<h3>Pearson</h3>
+
+<p>trabaja con los valores originales y detecta principalmente relación lineal.</p>
+
+<h3>Spearman</h3>
+
+<p>convierte los valores conceptualmente a rangos.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">menor
+segundo menor
+tercero menor
+...
+mayor</code></pre>
+
+<p>Es bueno para relaciones monotónicas que no necesariamente sean lineales.</p>
+
+<hr>
+
+<p>Resultados:</p>
+
+<pre><code class="language-text">                          Pearson base
+
+median_income                  +0.688
+housing_median_age             +0.106
+rooms_per_household            +0.152
+bedrooms_per_room              -0.233
+population_per_household       -0.024</code></pre>
+
+<p>La variable que destaca claramente es:</p>
+
+<pre><code class="language-text">median_income</code></pre>
+
+<hr>
+
+<p>En los datos curados:</p>
+
+<pre><code class="language-text">rooms_per_household            +0.259
+bedrooms_per_room              -0.250
+population_per_household       -0.263</code></pre>
+
+<p>Pero cuidado:</p>
+
+<blockquote>cambiar el dataset cambia también las correlaciones.</blockquote>
+
+<p>No podemos decir que la versión curada sea automáticamente «la correlación verdadera».</p>
+
+<hr>
+
+<h1>Heatmap</h1>
+
+<pre><code class="language-python">fig, ejes = plt.subplots(1, 2, figsize=(15, 6))</code></pre>
+
+<p>dos mapas de calor.</p>
+
+<hr>
+
+<p>El <code>for</code>:</p>
+
+<pre><code class="language-python">for matriz, titulo, eje in [
+    (correlaciones, &quot;Base completa preparada&quot;, ejes[0]),
+    (corr_clean, &quot;Subconjunto curado&quot;, ejes[1])
+]:</code></pre>
+
+<p>recorre dos tuplas.</p>
+
+<p>Primera iteración:</p>
+
+<pre><code class="language-text">matriz = correlaciones
+titulo = Base completa preparada
+eje = primer gráfico</code></pre>
+
+<p>Segunda:</p>
+
+<pre><code class="language-text">matriz = corr_clean
+titulo = Subconjunto curado
+eje = segundo gráfico</code></pre>
+
+<hr>
+
+<pre><code class="language-python">sns.heatmap(
+    matriz,
+    annot=True,
+    fmt=&quot;.2f&quot;,
+    vmin=-1,
+    vmax=1,
+    center=0,
+    cmap=&quot;vlag&quot;,
+    ax=eje
+)</code></pre>
+
+<h3><code>annot=True</code></h3>
+
+<p>escribe los números en cada celda.</p>
+
+<h3><code>fmt=".2f"</code></h3>
+
+<p>dos decimales.</p>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">0.688 → 0.69</code></pre>
+
+<h3><code>vmin=-1</code></h3>
+
+<p>mínimo de escala de color.</p>
+
+<h3><code>vmax=1</code></h3>
+
+<p>máximo.</p>
+
+<p>Esto tiene sentido porque correlación está entre -1 y 1.</p>
+
+<h3><code>center=0</code></h3>
+
+<p>centra visualmente la paleta en cero.</p>
+
+<h3><code>cmap="vlag"</code></h3>
+
+<p>paleta de colores divergente.</p>
+
+<h3><code>ax=eje</code></h3>
+
+<p>gráfico correspondiente.</p>
+
+<hr>
+
+<h1>CELDA 14 — <code>sample()</code> y pairplot</h1>
+
+<pre><code class="language-python">muestra = df.sample(n=min(800, len(df)), random_state=SEMILLA)</code></pre>
+
+<h2><code>.sample()</code></h2>
+
+<p>extrae una muestra aleatoria.</p>
+
+<h3><code>n=</code></h3>
+
+<p>cantidad de filas.</p>
+
+<p>Aquí:</p>
+
+<pre><code class="language-python">min(800, len(df))</code></pre>
+
+<p><code>min()</code> devuelve el menor valor.</p>
+
+<p>Como tenemos 20.640:</p>
+
+<pre><code class="language-text">min(800, 20640) = 800</code></pre>
+
+<p>Se toman 800 filas.</p>
+
+<p>Esta estructura también permite que el código funcione con datasets menores de 800.</p>
+
+<hr>
+
+<h3><code>random_state=SEMILLA</code></h3>
+
+<p>La semilla es 42.</p>
+
+<p>Garantiza reproducibilidad.</p>
+
+<p>Sin semilla:</p>
+
+<pre><code class="language-text">ejecución 1 → muestra A
+ejecución 2 → muestra B</code></pre>
+
+<p>Con semilla:</p>
+
+<pre><code class="language-text">ejecución 1 → muestra A
+ejecución 2 → muestra A</code></pre>
+
+<p>si los datos no cambian.</p>
+
+<hr>
+
+<pre><code class="language-python">columnas_pair = [
+    &quot;median_income&quot;,
+    &quot;median_house_value&quot;,
+    &quot;rooms_per_household&quot;
+]</code></pre>
+
+<p>seleccionan tres variables para evitar un pairplot gigantesco.</p>
+
+<hr>
+
+<h1>Pairplot</h1>
+
+<pre><code class="language-python">g = sns.pairplot(
+    muestra,
+    vars=columnas_pair,
+    hue=&quot;ocean_proximity&quot;,
+    diag_kind=&quot;hist&quot;,
+    plot_kws={&quot;alpha&quot;: 0.35, &quot;s&quot;: 12}
+)</code></pre>
+
+<p><code>pairplot()</code> crea una matriz de relaciones entre variables.</p>
+
+<p>Con 3 variables tendremos gráficamente combinaciones como:</p>
+
+<pre><code class="language-text">income vs price
+income vs rooms
+price vs rooms</code></pre>
+
+<p>y también distribuciones en diagonal.</p>
+
+<hr>
+
+<h3><code>vars=columnas_pair</code></h3>
+
+<p>variables utilizadas.</p>
+
+<h3><code>hue="ocean_proximity"</code></h3>
+
+<p>colorea puntos según costa.</p>
+
+<h3><code>diag_kind="hist"</code></h3>
+
+<p>en la diagonal utiliza histogramas.</p>
+
+<h3><code>plot_kws={...}</code></h3>
+
+<p><code>kws</code> significa aproximadamente keyword arguments.</p>
+
+<p>Envía configuraciones adicionales a los gráficos internos.</p>
+
+<pre><code class="language-python">&quot;alpha&quot;: 0.35</code></pre>
+
+<p>transparencia.</p>
+
+<p>0 = totalmente transparente.</p>
+
+<p>1 = totalmente opaco.</p>
+
+<pre><code class="language-python">&quot;s&quot;: 12</code></pre>
+
+<p>tamaño de los puntos.</p>
+
+<hr>
+
+<p><code>pairplot</code> devuelve un objeto especial.</p>
+
+<p>Se guarda como:</p>
+
+<pre><code class="language-python">g</code></pre>
+
+<hr>
+
+<pre><code class="language-python">g.fig.suptitle(...)</code></pre>
+
+<p>Accedemos a la figura interna del pairplot:</p>
+
+<pre><code class="language-python">g.fig</code></pre>
+
+<p>y ponemos título.</p>
+
+<pre><code class="language-python">y=1.02</code></pre>
+
+<p>mueve verticalmente el título un poco hacia arriba para evitar superposición.</p>
+
+<hr>
+
+<h1>Mantener las mismas observaciones que pasaron limpieza</h1>
+
+<pre><code class="language-python">muestra = muestra.loc[muestra.index.isin(df_clean.index)].copy()</code></pre>
+
+<p>Muy interesante.</p>
+
+<p>Cada fila tiene un índice.</p>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">0
+1
+2
+3
+...</code></pre>
+
+<p><code>df_clean.index</code></p>
+
+<p>contiene los índices que sobrevivieron al filtrado.</p>
+
+<hr>
+
+<pre><code class="language-python">muestra.index.isin(df_clean.index)</code></pre>
+
+<p>pregunta para cada fila de la muestra:</p>
+
+<blockquote>¿su índice sigue existiendo en <code>df_clean</code>?</blockquote>
+
+<p>Devuelve:</p>
+
+<pre><code class="language-text">True / False</code></pre>
+
+<p>Después <code>.loc[]</code> conserva únicamente los <code>True</code>.</p>
+
+<p>La ventaja es que no toma una nueva muestra.</p>
+
+<p>Compara:</p>
+
+<pre><code class="language-text">antes del filtrado
+vs
+las mismas observaciones que sobrevivieron</code></pre>
+
+<hr>
+
+<h1>CELDA 16 — Geografía</h1>
+
+<pre><code class="language-python">fig, ejes = plt.subplots(1, 2, figsize=(13, 5))</code></pre>
+
+<p>crea dos gráficos.</p>
+
+<hr>
+
+<h1>Mapa aproximado</h1>
+
+<pre><code class="language-python">mapa = ejes[0].scatter(
+    df_clean[&quot;longitude&quot;],
+    df_clean[&quot;latitude&quot;],
+    c=df_clean[&quot;median_house_value&quot;],
+    cmap=&quot;viridis&quot;,
+    s=5,
+    alpha=0.55
+)</code></pre>
+
+<p>Aquí utilizan directamente Matplotlib.</p>
+
+<p><code>scatter()</code> crea gráfico de dispersión.</p>
+
+<p>Primer argumento:</p>
+
+<pre><code class="language-python">longitude</code></pre>
+
+<p>eje X.</p>
+
+<p>Segundo:</p>
+
+<pre><code class="language-python">latitude</code></pre>
+
+<p>eje Y.</p>
+
+<p>Como son coordenadas, al dibujarlas aparece aproximadamente la forma geográfica de California.</p>
+
+<hr>
+
+<h3><code>c=</code></h3>
+
+<pre><code class="language-python">c=df_clean[&quot;median_house_value&quot;]</code></pre>
+
+<p>el color de cada punto depende del precio.</p>
+
+<h3><code>cmap="viridis"</code></h3>
+
+<p>paleta de colores.</p>
+
+<h3><code>s=5</code></h3>
+
+<p>tamaño del punto.</p>
+
+<h3><code>alpha=0.55</code></h3>
+
+<p>transparencia.</p>
+
+<hr>
+
+<h1>Barra de colores</h1>
+
+<pre><code class="language-python">fig.colorbar(
+    mapa,
+    ax=ejes[0],
+    label=&quot;Valor mediano (USD de 1990)&quot;
+)</code></pre>
+
+<p><code>colorbar()</code> agrega la escala que permite interpretar qué color corresponde a qué precio.</p>
+
+<p><code>mapa</code> contiene la información necesaria para saber cómo se asignaron los colores.</p>
+
+<hr>
+
+<h1>Scatter habitaciones/precio</h1>
+
+<pre><code class="language-python">sns.scatterplot(
+    data=muestra,
+    x=&quot;rooms_per_household&quot;,
+    y=&quot;median_house_value&quot;,
+    hue=&quot;median_income&quot;,
+    palette=&quot;viridis&quot;,
+    alpha=0.5,
+    s=20,
+    ax=ejes[1]
+)</code></pre>
+
+<p>Cada punto representa una zona.</p>
+
+<p>X:</p>
+
+<pre><code class="language-text">habitaciones por hogar</code></pre>
+
+<p>Y:</p>
+
+<pre><code class="language-text">precio</code></pre>
+
+<p>Color:</p>
+
+<pre><code class="language-text">ingreso</code></pre>
+
+<p>Esto permite visualizar <strong>tres variables simultáneamente</strong>.</p>
+
+<hr>
+
+<h1>Tres gráficos de ratios</h1>
+
+<pre><code class="language-python">fig, ejes = plt.subplots(1, 3, figsize=(14, 4))</code></pre>
+
+<p>crea tres gráficos.</p>
+
+<hr>
+
+<pre><code class="language-python">for columna, eje in zip(ratios, ejes):</code></pre>
+
+<p>recorre las tres variables derivadas.</p>
+
+<hr>
+
+<pre><code class="language-python">sns.scatterplot(
+    data=df_clean,
+    x=columna,
+    y=&quot;median_house_value&quot;,
+    alpha=0.2,
+    s=8,
+    ax=eje
+)</code></pre>
+
+<p>Muestra cada ratio frente al precio.</p>
+
+<p><code>alpha=0.2</code> tiene bastante transparencia porque existen casi 19.000 puntos.</p>
+
+<p>Esto evita saturación visual.</p>
+
+<hr>
+
+<h1>CELDA 18 — Cuartiles de ingreso</h1>
+
+<pre><code class="language-python">df_clean[&quot;grupo_ingreso&quot;] = pd.qcut(
+    df_clean[&quot;median_income&quot;],
+    q=4,
+    labels=[&quot;Q1&quot;, &quot;Q2&quot;, &quot;Q3&quot;, &quot;Q4&quot;]
+)</code></pre>
+
+<p>Esta línea crea grupos.</p>
+
+<h2><code>pd.qcut()</code></h2>
+
+<p>Divide una variable según cuantiles.</p>
+
+<h3>Datos</h3>
+
+<pre><code class="language-python">df_clean[&quot;median_income&quot;]</code></pre>
+
+<h3><code>q=4</code></h3>
+
+<p>cuatro grupos.</p>
+
+<p>Es decir:</p>
+
+<pre><code class="language-text">Q1 → 25% con ingresos más bajos
+Q2 → siguiente 25%
+Q3 → siguiente 25%
+Q4 → 25% con ingresos más altos</code></pre>
+
+<p>Los grupos tienen cantidades aproximadamente similares.</p>
+
+<p>Esto no significa que los intervalos numéricos tengan el mismo ancho.</p>
+
+<hr>
+
+<h3><code>labels</code></h3>
+
+<pre><code class="language-python">[&quot;Q1&quot;, &quot;Q2&quot;, &quot;Q3&quot;, &quot;Q4&quot;]</code></pre>
+
+<p>nombres de las cuatro categorías.</p>
+
+<hr>
+
+<h1>Pivot table</h1>
+
+<pre><code class="language-python">cruce = df_clean.pivot_table(
+    index=&quot;ocean_proximity&quot;,
+    columns=&quot;grupo_ingreso&quot;,
+    values=&quot;median_house_value&quot;,
+    aggfunc=&quot;median&quot;,
+    observed=True
+)</code></pre>
+
+<p><code>pivot_table()</code> crea una tabla resumen.</p>
+
+<h3><code>index="ocean_proximity"</code></h3>
+
+<p>filas:</p>
+
+<pre><code class="language-text">INLAND
+NEAR BAY
+NEAR OCEAN
+...</code></pre>
+
+<h3><code>columns="grupo_ingreso"</code></h3>
+
+<p>columnas:</p>
+
+<pre><code class="language-text">Q1
+Q2
+Q3
+Q4</code></pre>
+
+<h3><code>values="median_house_value"</code></h3>
+
+<p>variable que queremos resumir.</p>
+
+<h3><code>aggfunc="median"</code></h3>
+
+<p>calcular mediana.</p>
+
+<h3><code>observed=True</code></h3>
+
+<p>cuando se utilizan variables categóricas, conserva las combinaciones realmente observadas en lugar de expandir innecesariamente todas las categorías posibles.</p>
+
+<hr>
+
+<p>El resultado:</p>
+
+<pre><code class="language-text">                   Q1       Q2       Q3       Q4
+
+INLAND          74000   105650   132600   193800
+NEAR BAY       126900   187500   225000   312500
+NEAR OCEAN     131750   198400   237500   316700</code></pre>
+
+<p>Esto es bastante informativo.</p>
+
+<p>Dentro de cada categoría costera:</p>
+
+<pre><code class="language-text">Q1 → Q2 → Q3 → Q4</code></pre>
+
+<p>el precio generalmente aumenta con ingreso.</p>
+
+<p>Pero además, dentro de un mismo cuartil, aparecen diferencias geográficas.</p>
+
+<p>Por ejemplo Q4:</p>
+
+<pre><code class="language-text">INLAND       193.800
+NEAR OCEAN   316.700</code></pre>
+
+<p>Sugiere que <strong>ingreso y ubicación aportan información simultáneamente</strong>.</p>
+
+<hr>
+
+<h1>Tabla de conteos</h1>
+
+<pre><code class="language-python">conteos = pd.crosstab(
+    df_clean[&quot;ocean_proximity&quot;],
+    df_clean[&quot;grupo_ingreso&quot;]
+)</code></pre>
+
+<p><code>pd.crosstab()</code> construye una tabla de frecuencias.</p>
+
+<p>No calcula precios.</p>
+
+<p>Cuenta observaciones.</p>
+
+<p>Esto es importante porque tenemos por ejemplo:</p>
+
+<pre><code class="language-text">ISLAND Q1 = 1
+ISLAND Q2 = 4
+ISLAND Q3 = 0
+ISLAND Q4 = 0</code></pre>
+
+<p>Por eso los precios de <code>ISLAND</code> no son estadísticamente comparables con grupos de miles de observaciones.</p>
+
+<hr>
+
+<h1>Heatmap</h1>
+
+<pre><code class="language-python">sns.heatmap(
+    cruce / 1000,
+    annot=True,
+    fmt=&quot;.0f&quot;,
+    cmap=&quot;YlGnBu&quot;
+)</code></pre>
+
+<p>Primero:</p>
+
+<pre><code class="language-python">cruce / 1000</code></pre>
+
+<p>convierte dólares a miles de dólares.</p>
+
+<p>Ejemplo:</p>
+
+<pre><code class="language-text">316700 / 1000 = 316.7</code></pre>
+
+<h3><code>annot=True</code></h3>
+
+<p>muestra números.</p>
+
+<h3><code>fmt=".0f"</code></h3>
+
+<p>sin decimales.</p>
+
+<h3><code>cmap="YlGnBu"</code></h3>
+
+<p>paleta:</p>
+
+<pre><code class="language-text">Yellow → Green → Blue</code></pre>
+
+<hr>
+
+<h1>CELDA 20 — Sensibilidad a la imputación</h1>
+
+<p>Esta es una buena práctica metodológica.</p>
+
+<p>Recordemos que 207 valores de:</p>
+
+<pre><code class="language-text">total_bedrooms</code></pre>
+
+<p>fueron inventados estadísticamente usando la mediana.</p>
+
+<p>Entonces se pregunta:</p>
+
+<blockquote>¿Nuestra conclusión sobre <code>bedrooms_per_room</code> cambia mucho si quitamos completamente esas 207 filas?</blockquote>
+
+<hr>
+
+<pre><code class="language-python">sensibilidad = pd.Series({</code></pre>
+
+<p>crea una Series con dos resultados.</p>
+
+<hr>
+
+<h1>Con imputación</h1>
+
+<pre><code class="language-python">&quot;con_imputacion&quot;:
+    df[&quot;bedrooms_per_room&quot;].corr(df[&quot;median_house_value&quot;])</code></pre>
+
+<p>Aquí <code>.corr()</code> se utiliza entre dos Series.</p>
+
+<p>Por defecto Pearson.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">-0.233</code></pre>
+
+<hr>
+
+<h1>Sin filas imputadas</h1>
+
+<pre><code class="language-python">df.loc[
+    ~df[&quot;bedrooms_imputados&quot;],
+    [&quot;bedrooms_per_room&quot;, &quot;median_house_value&quot;]
+]</code></pre>
+
+<p>Aquí aparece:</p>
+
+<pre><code class="language-python">~</code></pre>
+
+<p>que significa negación booleana.</p>
+
+<p>Si:</p>
+
+<pre><code class="language-text">bedrooms_imputados = True</code></pre>
+
+<p>entonces:</p>
+
+<pre><code class="language-text">~True = False</code></pre>
+
+<p>Por lo tanto se conservan:</p>
+
+<pre><code class="language-text">bedrooms_imputados == False</code></pre>
+
+<p>es decir, datos originalmente completos.</p>
+
+<hr>
+
+<p>Después:</p>
+
+<pre><code class="language-python">.corr()</code></pre>
+
+<p>produce una matriz 2×2:</p>
+
+<pre><code class="language-text">                     bedroom   price
+bedroom                 1       -0.256
+price                  -0.256     1</code></pre>
+
+<p>Finalmente:</p>
+
+<pre><code class="language-python">.iloc[0, 1]</code></pre>
+
+<p><code>.iloc</code></p>
+
+<p>selecciona por <strong>posición numérica</strong>.</p>
+
+<p>Fila:</p>
+
+<pre><code class="language-text">0</code></pre>
+
+<p>Columna:</p>
+
+<pre><code class="language-text">1</code></pre>
+
+<p>Obtiene:</p>
+
+<pre><code class="language-text">-0.256</code></pre>
+
+<hr>
+
+<p>Comparación:</p>
+
+<pre><code class="language-text">Con imputación       -0.233
+Sin imputadas        -0.256</code></pre>
+
+<p>La asociación cambia, pero no radicalmente.</p>
+
+<p>Eso indica que la conclusión no depende completamente de la imputación elegida.</p>
+
+<hr>
+
+<h1>CELDA 22 — Construcción automática de conclusiones</h1>
+
+<p>Primero crea:</p>
+
+<pre><code class="language-python">resumen = {</code></pre>
+
+<p>un diccionario Python.</p>
+
+<p>A diferencia de una Series/DataFrame, este es simplemente un:</p>
+
+<pre><code class="language-python">dict</code></pre>
+
+<hr>
+
+<pre><code class="language-python">&quot;filas&quot;: len(df)</code></pre>
+
+<p>→ 20.640.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;imputados&quot;: int(df[&quot;bedrooms_imputados&quot;].sum())</code></pre>
+
+<p>→ 207.</p>
+
+<hr>
+
+<pre><code class="language-python">&quot;cortes_p99&quot;: cortes_p99.to_dict()</code></pre>
+
+<p><code>to_dict()</code> convierte la Series a diccionario.</p>
+
+<p>Algo como:</p>
+
+<pre><code class="language-python">{
+    &quot;rooms_per_household&quot;: 10.357,
+    &quot;bedrooms_per_room&quot;: 0.4165,
+    ...
+}</code></pre>
+
+<hr>
+
+<pre><code class="language-python">float(corr_clean.loc[&quot;median_income&quot;, &quot;median_house_value&quot;])</code></pre>
+
+<p><code>.loc[]</code> selecciona utilizando nombres.</p>
+
+<p>Fila:</p>
+
+<pre><code class="language-text">median_income</code></pre>
+
+<p>Columna:</p>
+
+<pre><code class="language-text">median_house_value</code></pre>
+
+<p>Devuelve correlación:</p>
+
+<pre><code class="language-text">0.653...</code></pre>
+
+<p><code>float()</code> la convierte a <code>float</code> Python.</p>
+
+<hr>
+
+<h1>Mediana</h1>
+
+<pre><code class="language-python">float(df[&quot;median_house_value&quot;].median())</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">179700</code></pre>
+
+<hr>
+
+<h1>Pearson ingreso/precio</h1>
+
+<pre><code class="language-python">df[&quot;median_income&quot;].corr(df[&quot;median_house_value&quot;])</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">0.688</code></pre>
+
+<hr>
+
+<h1>Spearman ingreso/precio</h1>
+
+<pre><code class="language-python">df[[&quot;median_income&quot;, &quot;median_house_value&quot;]]
+    .corr(method=&quot;spearman&quot;)
+    .iloc[0, 1]</code></pre>
+
+<p>resultado:</p>
+
+<pre><code class="language-text">0.677</code></pre>
+
+<p>Pearson y Spearman son similares.</p>
+
+<p>Esto fortalece descriptivamente la idea de una asociación positiva bastante consistente.</p>
+
+<hr>
+
+<h1>Porcentaje en máximo</h1>
+
+<pre><code class="language-python">df[&quot;median_house_value&quot;]
+    .eq(df[&quot;median_house_value&quot;].max())
+    .mean() * 100</code></pre>
+
+<p>Acá utilizan un truco interesante.</p>
+
+<p><code>.eq(maximo)</code> genera:</p>
+
+<pre><code class="language-text">True
+False
+True
+...</code></pre>
+
+<p>Como:</p>
+
+<pre><code class="language-text">True = 1
+False = 0</code></pre>
+
+<p>la media representa la proporción.</p>
+
+<p>Resultado:</p>
+
+<pre><code class="language-text">4.68%</code></pre>
+
+<hr>
+
+<h1>Convertir resultados por costa a diccionario</h1>
+
+<pre><code class="language-python">por_costa[&quot;median&quot;].to_dict()</code></pre>
+
+<p>produce algo conceptualmente como:</p>
+
+<pre><code class="language-python">{
+    &quot;&lt;1H OCEAN&quot;: 209150,
+    &quot;INLAND&quot;: 107200,
+    &quot;ISLAND&quot;: 414700,
+    &quot;NEAR BAY&quot;: 220150,
+    &quot;NEAR OCEAN&quot;: 219500
+}</code></pre>
+
+<hr>
+
+<h1>Markdown dinámico</h1>
+
+<p>Finalmente:</p>
+
+<pre><code class="language-python">display(Markdown(f&quot;&quot;&quot; ... &quot;&quot;&quot;))</code></pre>
+
+<p>Aquí tenemos tres conceptos.</p>
+
+<h2><code>f""" ... """</code></h2>
+
+<p>Es una <strong>f-string multilínea</strong>.</p>
+
+<p>Permite insertar variables dentro del texto usando:</p>
+
+<pre><code class="language-python">{variable}</code></pre>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-python">f&quot;Hay {len(df)} zonas&quot;</code></pre>
+
+<p>produce:</p>
+
+<pre><code class="language-text">Hay 20640 zonas</code></pre>
+
+<hr>
+
+<p>También aparecen formatos como:</p>
+
+<pre><code class="language-python">{len(df):,}</code></pre>
+
+<p>El:</p>
+
+<pre><code class="language-text">:,</code></pre>
+
+<p>agrega separador de miles.</p>
+
+<hr>
+
+<pre><code class="language-python">{resumen[&#x27;pearson_ingreso_precio&#x27;]:.3f}</code></pre>
+
+<p>significa:</p>
+
+<pre><code class="language-text">mostrar como float con 3 decimales</code></pre>
+
+<p>Por ejemplo:</p>
+
+<pre><code class="language-text">0.687953...</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">0.688</code></pre>
+
+<hr>
+
+<pre><code class="language-python">{resumen[&#x27;porcentaje_en_maximo&#x27;]:.2f}</code></pre>
+
+<p>dos decimales.</p>
+
+<p>→</p>
+
+<pre><code class="language-text">4.68</code></pre>
+
+<hr>
+
+<pre><code class="language-python">{resumen[&#x27;mediana_precio&#x27;]:,.0f}</code></pre>
+
+<p>significa:</p>
+
+<pre><code class="language-text">,   separador de miles
+.0f cero decimales</code></pre>
+
+<p>→</p>
+
+<pre><code class="language-text">179,700</code></pre>
+
+<hr>
+
+<p><code>Markdown(...)</code> interpreta:</p>
+
+<pre><code class="language-markdown">**texto**</code></pre>
+
+<p>como negrita.</p>
+
+<p>Finalmente <code>display()</code> lo renderiza dentro de Jupyter.</p>
+
+<hr>
+
+<h1>¿Qué concluye realmente todo el notebook?</h1>
+
+<p>Después de analizar las <strong>20.640 zonas censales</strong>, el resultado principal es que el <strong>ingreso mediano de la zona es la variable analizada con asociación más clara con el valor de las viviendas</strong>.</p>
+
+<p>La correlación es:</p>
+
+<pre><code class="language-text">Pearson  = 0.688
+Spearman = 0.677</code></pre>
+
+<p>Por tanto:</p>
+
+<pre><code class="language-text">mayor ingreso
+      ↕
+generalmente mayor precio</code></pre>
+
+<p>pero no prueba causalidad.</p>
+
+<p>Además aparece una asociación geográfica importante.</p>
+
+<p>En el subconjunto curado:</p>
+
+<pre><code class="language-text">INLAND
+mediana = USD 107.200
+
+NEAR OCEAN
+mediana = USD 219.500
+
+NEAR BAY
+mediana = USD 220.150</code></pre>
+
+<p>Por eso la ubicación también parece aportar mucho contexto.</p>
+
+<hr>
+
+<h1>¿Por qué crean <code>df</code> y <code>df_clean</code>?</h1>
+
+<p>Esta diferencia te la pueden preguntar.</p>
+
+<h2><code>raw</code></h2>
+
+<pre><code class="language-python">raw</code></pre>
+
+<p>Datos originales descargados.</p>
+
+<p>20.640 filas.</p>
+
+<p>No se deberían modificar.</p>
+
+<hr>
+
+<h2><code>df</code></h2>
+
+<pre><code class="language-python">df</code></pre>
+
+<p>Datos preparados.</p>
+
+<p>También 20.640 filas.</p>
+
+<p>Aquí:</p>
+
+<pre><code class="language-text">se normaliza ocean_proximity
+se imputan los dormitorios faltantes
+se crean los tres ratios</code></pre>
+
+<p>pero no se eliminan zonas.</p>
+
+<hr>
+
+<h2><code>df_clean</code></h2>
+
+<pre><code class="language-python">df_clean</code></pre>
+
+<p>Datos curados.</p>
+
+<p>19.087 filas.</p>
+
+<p>Se excluyen zonas que:</p>
+
+<pre><code class="language-text">median_house_value = máximo</code></pre>
+
+<p>o tengan algún ratio:</p>
+
+<pre><code class="language-text">&gt; P99</code></pre>
+
+<p>Se excluyen:</p>
+
+<pre><code class="language-text">1.553</code></pre>
+
+<p>o:</p>
+
+<pre><code class="language-text">7,52%</code></pre>
+
+<hr>
+
+<h1>Diferencia entre las principales funciones de selección</h1>
+
+<p>En este notebook aparecen varias formas y conviene distinguirlas:</p>
+
+<pre><code class="language-python">df[&quot;median_income&quot;]</code></pre>
+
+<p>Una columna → generalmente <code>Series</code>.</p>
+
+<pre><code class="language-python">df[[&quot;median_income&quot;, &quot;median_house_value&quot;]]</code></pre>
+
+<p>Varias columnas → <code>DataFrame</code>.</p>
+
+<pre><code class="language-python">df.loc[condicion]</code></pre>
+
+<p>Selecciona usando etiquetas o condiciones.</p>
+
+<pre><code class="language-python">df.loc[filas, columnas]</code></pre>
+
+<p>Selecciona filas y columnas.</p>
+
+<pre><code class="language-python">df.iloc[0, 1]</code></pre>
+
+<p>Selecciona por posiciones numéricas.</p>
+
+<hr>
+
+<h1>Diferencia entre atributo y método</h1>
+
+<p>Esto también es importante en Python.</p>
+
+<p>Un <strong>atributo</strong> no lleva paréntesis:</p>
+
+<pre><code class="language-python">raw.shape
+df.index
+g.fig</code></pre>
+
+<p>Un <strong>método</strong> sí:</p>
+
+<pre><code class="language-python">raw.head()
+raw.info()
+df.copy()
+df.corr()</code></pre>
+
+<p>Porque el método ejecuta una acción.</p>
+
+<hr>
+
+<h1>Métodos de Pandas que aparecen en este notebook</h1>
+
+<table><thead><tr><th>Método</th><th>Para qué se usa</th></tr></thead><tbody>
+<tr><td><code>read_csv()</code></td><td>leer CSV</td></tr>
+<tr><td><code>head()</code></td><td>primeras filas</td></tr>
+<tr><td><code>info()</code></td><td>estructura de datos</td></tr>
+<tr><td><code>describe()</code></td><td>estadística descriptiva</td></tr>
+<tr><td><code>round()</code></td><td>redondear</td></tr>
+<tr><td><code>isna()</code></td><td>detectar faltantes</td></tr>
+<tr><td><code>sum()</code></td><td>sumar/contar <code>True</code></td></tr>
+<tr><td><code>mean()</code></td><td>media</td></tr>
+<tr><td><code>median()</code></td><td>mediana</td></tr>
+<tr><td><code>max()</code></td><td>máximo</td></tr>
+<tr><td><code>duplicated()</code></td><td>detectar duplicados</td></tr>
+<tr><td><code>value_counts()</code></td><td>frecuencia de categorías</td></tr>
+<tr><td><code>rename()</code></td><td>cambiar nombre</td></tr>
+<tr><td><code>eq()</code></td><td>igual a</td></tr>
+<tr><td><code>copy()</code></td><td>copiar DataFrame</td></tr>
+<tr><td><code>fillna()</code></td><td>rellenar nulos</td></tr>
+<tr><td><code>quantile()</code></td><td>cuantiles</td></tr>
+<tr><td><code>le()</code></td><td>menor o igual</td></tr>
+<tr><td><code>ge()</code></td><td>mayor o igual</td></tr>
+<tr><td><code>lt()</code></td><td>menor que</td></tr>
+<tr><td><code>all()</code></td><td>comprobar que todos sean <code>True</code></td></tr>
+<tr><td><code>any()</code></td><td>comprobar si alguno es <code>True</code></td></tr>
+<tr><td><code>select_dtypes()</code></td><td>seleccionar por tipo</td></tr>
+<tr><td><code>groupby()</code></td><td>agrupar</td></tr>
+<tr><td><code>agg()</code></td><td>agregar estadísticas</td></tr>
+<tr><td><code>corr()</code></td><td>correlaciones</td></tr>
+<tr><td><code>sample()</code></td><td>muestra aleatoria</td></tr>
+<tr><td><code>isin()</code></td><td>verificar pertenencia</td></tr>
+<tr><td><code>qcut()</code></td><td>dividir por cuantiles</td></tr>
+<tr><td><code>pivot_table()</code></td><td>tabla dinámica</td></tr>
+<tr><td><code>crosstab()</code></td><td>tabla de frecuencias</td></tr>
+<tr><td><code>to_frame()</code></td><td>Series → DataFrame</td></tr>
+<tr><td><code>to_dict()</code></td><td>convertir a diccionario</td></tr>
+</tbody></table>
+
+<hr>
+
+<h1>Funciones de visualización que aparecen</h1>
+
+<table><thead><tr><th>Función</th><th>Resultado</th></tr></thead><tbody>
+<tr><td><code>sns.histplot()</code></td><td>histograma</td></tr>
+<tr><td><code>sns.boxplot()</code></td><td>diagrama de caja</td></tr>
+<tr><td><code>sns.heatmap()</code></td><td>mapa de calor</td></tr>
+<tr><td><code>sns.pairplot()</code></td><td>matriz de relaciones</td></tr>
+<tr><td><code>sns.scatterplot()</code></td><td>dispersión</td></tr>
+<tr><td><code>plt.subplots()</code></td><td>figura con varios gráficos</td></tr>
+<tr><td><code>plt.figure()</code></td><td>nueva figura</td></tr>
+<tr><td><code>scatter()</code></td><td>dispersión de Matplotlib</td></tr>
+<tr><td><code>colorbar()</code></td><td>escala de colores</td></tr>
+<tr><td><code>set()</code></td><td>títulos/etiquetas del eje</td></tr>
+<tr><td><code>suptitle()</code></td><td>título general</td></tr>
+<tr><td><code>tight_layout()</code></td><td>organiza espacios</td></tr>
+<tr><td><code>show()</code></td><td>muestra gráfico</td></tr>
+<tr><td><code>close()</code></td><td>cierra figura</td></tr>
+</tbody></table>
+
+<hr>
+
+<h1>Las 5 ideas más importantes para entender el código</h1>
+
+<p><strong>1. El notebook nunca trabaja con casas individuales.</strong> Trabaja con zonas censales, por eso variables como <code>total_rooms</code> son totales de una zona.</p>
+
+<p><strong>2. <code>median_income</code> es un índice escalado.</strong> No hay que interpretarlo como salario literal.</p>
+
+<p><strong>3. La imputación solamente ocurre en <code>total_bedrooms</code>.</strong> Hay 207 faltantes y se reemplazan por la mediana 435, conservando además una columna <code>bedrooms_imputados</code> para saber cuáles fueron alterados.</p>
+
+<p><strong>4. <code>df_clean</code> no significa «datos verdaderos» y <code>df</code> «datos malos».</strong> Es simplemente un subconjunto utilizado para estudiar qué pasa sin el precio máximo y sin los extremos superiores de ciertos ratios.</p>
+
+<p><strong>5. La conclusión es asociación, no causalidad.</strong> El resultado más claro es que ingreso, ubicación costera y, en menor medida, algunas características derivadas están asociados con el valor mediano de las viviendas. El notebook no demuestra que una variable por sí sola provoque el aumento del precio.</p>
+
+<h3>En una sola frase, el notebook hace esto:</h3>
+
+<pre><code class="language-text">Descarga datos → revisa su calidad → corrige dormitorios faltantes →
+crea variables más comparables → estudia distribuciones →
+compara costa e ingreso → calcula correlaciones →
+analiza geografía → verifica sensibilidad →
+genera conclusiones automáticamente.</code></pre>
+
+<p>Y la conclusión cuantitativa principal es:</p>
+
+<div class='formula'><pre>\[
+\boxed{
+\text{Ingreso mediano} \longleftrightarrow
+\text{valor de vivienda}
+\quad r_{\text{Pearson}} = 0.688
+}
+\]</pre></div>
+
+<p>Es una <strong>asociación positiva relativamente fuerte</strong>, pero no una demostración de causalidad.</p>
+</main>
+</body>
+</html>
