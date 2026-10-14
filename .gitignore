@@ -6,6 +6,9 @@
 !/README.md
 !/*.html
 !/notebooks/
+!/practicas_livecoding/
+!/resoluciones_livecoding/
+/practicas_livecoding/datos/
 /notebooks/*
 !/notebooks/*.ipynb
 
