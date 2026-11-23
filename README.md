@@ -1,36 +1,34 @@
-# Entrega The Hatch C1
+# 📊 Análisis exploratorio de datos — Viviendas y Energía
 
-La entrega incluye estos archivos:
+> The Hatch · Challenge 1 · Python · pandas · seaborn
 
-- `notebooks/01_viviendas.ipynb`
-- `notebooks/02_energia.ipynb`
-- `requirements.txt`
+Dos análisis exploratorios (EDA) completos sobre datasets públicos, desde la limpieza hasta las conclusiones, más una serie de ejercicios de *livecoding* con sus resoluciones.
 
-Instalá las dependencias desde la raíz del proyecto con
-`python -m pip install -r requirements.txt`, usando el mismo entorno Python que el kernel.
-Cada notebook descarga su dataset público desde internet y realiza el análisis completo en memoria. Los resultados están ejecutados y embebidos.
-No necesitan carpetas de datos, scripts, documentos ni resultados externos.
+## 📓 Notebooks
 
-Abrilos en Jupyter, Colab o Kaggle, reiniciá el kernel y ejecutá todas las celdas.
-Necesitan un kernel Python con pip e internet. En Kaggle habilitá internet y vinculá
-el dataset correspondiente al publicar, para cumplir los requisitos del challenge.
+| Notebook | Dataset | Qué se analiza |
+|---|---|---|
+| [`01_viviendas.ipynb`](notebooks/01_viviendas.ipynb) | [California Housing Prices](https://www.kaggle.com/datasets/camnugent/california-housing-prices) | Distribuciones, valores faltantes e imputación, outliers, precio según la cercanía a la costa |
+| [`02_energia.ipynb`](notebooks/02_energia.ipynb) | [Brazil's Energy Consumption](https://www.kaggle.com/datasets/lucasdasilvadantas/brazils-energy-consumption) | Serie mensual con media móvil, estacionalidad, ranking por estado y sector, mercado regulado frente a libre |
 
-Fuentes:
+Cada notebook descarga su dataset y corre de punta a punta en memoria. Los resultados y gráficos ya están ejecutados y embebidos, así que se pueden leer directamente en GitHub.
 
-- [Viviendas de California](https://www.kaggle.com/datasets/camnugent/california-housing-prices)
-- [Consumo de Brasil](https://www.kaggle.com/datasets/lucasdasilvadantas/brazils-energy-consumption)
+## 🧪 Práctica de livecoding
 
-Verificación del 13 de octubre de 2026: ambos notebooks ejecutados con kernels nuevos
-y dependencias previamente instaladas; 25 celdas de código sin errores.
-También se validaron la estructura de los notebooks, el lint y los enlaces y JavaScript de los HTML.
-La evidencia de la ejecución anterior se conserva localmente en `.local/verificacion_internet/resultado.json`.
+| Carpeta | Contenido |
+|---|---|
+| [`practicas_livecoding/`](practicas_livecoding/) | 8 ejercicios cortos (4 por dataset): extremos por grupo, resúmenes, filtros por percentiles, sensibilidad a la imputación, rankings e intensidad |
+| [`resoluciones_livecoding/`](resoluciones_livecoding/) | Resolución comentada de cada ejercicio |
 
-El repositorio también incluye las guías de estudio:
+## 🛠️ Stack
 
-- `index.html`
-- `explicacion_01_viviendas.html`
-- `explicacion_02_energia.html`
+`Python` · `pandas` · `NumPy` · `matplotlib` · `seaborn` · `Jupyter`
 
-Los materiales anteriores se conservaron en `.local/material_apoyo/`.
-El ZIP anterior en `.local/entrega_notebooks.zip` no incluye estos cambios ni `requirements.txt`.
-El repositorio excluye los materiales auxiliares y datos locales mediante `.gitignore`.
+## 🚀 Ejecutar
+
+```bash
+python -m pip install -r requirements.txt
+jupyter notebook
+```
+
+Usá el mismo entorno de Python como kernel y ejecutá todas las celdas (*Restart & Run All*). Los notebooks necesitan internet para descargar los datos; en Kaggle activá internet y vinculá el dataset correspondiente.
