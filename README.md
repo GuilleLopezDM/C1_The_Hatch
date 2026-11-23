@@ -28,7 +28,8 @@ Cada notebook descarga su dataset y corre de punta a punta en memoria. Los resul
 
 ```bash
 python -m pip install -r requirements.txt
-jupyter notebook
 ```
+
+Abrí los notebooks en VS Code, Jupyter, Colab o Kaggle.
 
 Usá el mismo entorno de Python como kernel y ejecutá todas las celdas (*Restart & Run All*). Los notebooks necesitan internet para descargar los datos; en Kaggle activá internet y vinculá el dataset correspondiente.
